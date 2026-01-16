@@ -90,7 +90,8 @@ model Tenant {
   smsBalance  Int    @default(0) @map("sms_balance")
 
   // Data Retention (Days to keep files)
-  retentionDays Int @default(30) @map("retention_days")
+  maxRetentionDays        Int @default(30) @map("max_retention_days")        // Limite Super Admin (contrat)
+  configuredRetentionDays Int @default(30) @map("configured_retention_days") // Préférence Lab Admin
 
   // Status
   isActive Boolean @default(true) @map("is_active")
@@ -107,6 +108,7 @@ model User {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at") // Soft Delete
 
   // Context
   tenantId String? @map("tenant_id") // Null only for SUPER_ADMIN
@@ -159,7 +161,8 @@ model Document {
   // Security & Lifecycle
   accessKey String         @unique @default(uuid()) @map("access_key") // The "Magic Link" token
   expiresAt DateTime       @map("expires_at") // HDS Retention Policy
-  status    DocumentStatus @default(UPLOADED)
+  status       DocumentStatus @default(UPLOADED)
+  isAnonymized Boolean        @default(false) @map("is_anonymized")
 
   // Traceability
   uploadedById String? @map("uploaded_by_id")
@@ -213,4 +216,3 @@ model SystemConfig {
 
   @@map("system_configs")
 }
-

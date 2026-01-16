@@ -1,7 +1,8 @@
 
-import { Controller, Post, Body, UnauthorizedException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard, RolesGuard, Roles } from './guards';
 // We can define DTOs here or separately. For brevity I'll define simple classes or check if standard ones exist.
 // Let's assume standard validation is wanted, I'll inline DTOs or create a file if strict.
 // For now, I'll use simple Body decorators with types.
@@ -39,5 +40,12 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async resetPassword(@Body() body: ResetPasswordDto) {
         return this.authService.resetPassword(body.token, body.newPass);
+    }
+
+    @Post('impersonate')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles('SUPER_ADMIN')
+    async impersonate(@Body('userId') userId: string) {
+        return this.authService.impersonate(userId);
     }
 }

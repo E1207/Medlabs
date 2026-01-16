@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { api } from '@/lib/api';
 
 export type UserRole = 'SUPER_ADMIN' | 'LAB_ADMIN' | 'TECHNICIAN';
 
@@ -15,6 +16,9 @@ interface AuthContextType {
     isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
+    impersonate: (userId: string) => Promise<void>;
+    stopImpersonating: () => void;
+    isImpersonating: boolean;
     switchRole: (role: UserRole) => void; // Dev only
 }
 
@@ -52,13 +56,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return stored ? JSON.parse(stored) : null;
     });
 
+    const isImpersonating = !!localStorage.getItem('originalToken');
+
     const login = async (email: string, password: string) => {
         try {
-            const res = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+            const res = await api.post('/auth/login', { email, password });
 
             if (!res.ok) {
                 if (res.status === 401) throw new Error('Invalid credentials');
@@ -78,20 +80,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('originalToken');
+        localStorage.removeItem('originalUser');
         setUser(null);
     };
 
+    const impersonate = async (userId: string) => {
+        try {
+            const res = await api.post('/auth/impersonate', { userId });
+            if (!res.ok) throw new Error('Impersonation failed');
+
+            const data = await res.json();
+
+            // Save original session
+            if (!localStorage.getItem('originalToken')) {
+                localStorage.setItem('originalToken', localStorage.getItem('token') || '');
+                localStorage.setItem('originalUser', JSON.stringify(user));
+            }
+
+            // Set new session
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.user);
+
+            // Force reload to reset app state/sockets/etc if necessary, or just state update
+            window.location.href = '/dashboard';
+        } catch (error) {
+            console.error('Impersonate error:', error);
+            throw error;
+        }
+    };
+
+    const stopImpersonating = () => {
+        const originalToken = localStorage.getItem('originalToken');
+        const originalUser = localStorage.getItem('originalUser');
+
+        if (originalToken && originalUser) {
+            localStorage.setItem('token', originalToken);
+            localStorage.setItem('user', originalUser);
+            setUser(JSON.parse(originalUser));
+
+            localStorage.removeItem('originalToken');
+            localStorage.removeItem('originalUser');
+            window.location.href = '/dashboard/users-directory';
+        }
+    };
+
     const switchRole = (role: UserRole) => {
-        // Dev only - specific to mocks currently, but we can keep it if we want to mock-switch for UI testing
-        // or effectively remove it if we want strict real auth.
-        // For now, let's keep it but warn it does nothing with real auth unless backend supports impersonation.
         if (MOCK_USERS[role]) {
             setUser({ ...user, ...MOCK_USERS[role] });
         }
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, switchRole }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, impersonate, stopImpersonating, isImpersonating, switchRole }}>
             {children}
         </AuthContext.Provider>
     );

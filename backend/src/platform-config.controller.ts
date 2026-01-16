@@ -33,8 +33,12 @@ export class PlatformConfigController {
                 fromEmail: this.dynamicConfig.get('smtp.from_email') || '',
             },
             retention: {
-                defaultDays: Number(this.dynamicConfig.get('retention.default_days')) || 30,
-                maxDays: Number(this.dynamicConfig.get('retention.max_days')) || 90,
+                defaultDays: Number(await this.dynamicConfig.get('retention.default_days')) || 30,
+                maxDays: Number(await this.dynamicConfig.get('retention.max_days')) || 90,
+            },
+            general: {
+                maintenanceMode: await this.dynamicConfig.get('MAINTENANCE_MODE') === 'true',
+                globalAnnouncement: await this.dynamicConfig.get('GLOBAL_ANNOUNCEMENT') || '',
             }
         };
     }
@@ -64,6 +68,11 @@ export class PlatformConfigController {
         if (body.retention) {
             if (body.retention.defaultDays) await this.dynamicConfig.set('retention.default_days', String(body.retention.defaultDays));
             if (body.retention.maxDays) await this.dynamicConfig.set('retention.max_days', String(body.retention.maxDays));
+        }
+
+        if (body.general) {
+            await this.dynamicConfig.set('MAINTENANCE_MODE', String(body.general.maintenanceMode));
+            await this.dynamicConfig.set('GLOBAL_ANNOUNCEMENT', body.general.globalAnnouncement || '');
         }
 
         return { success: true };

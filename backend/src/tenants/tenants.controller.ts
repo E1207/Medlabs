@@ -1,12 +1,37 @@
 
-import { Controller, Get, Patch, Body, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, UseGuards, Request, UnauthorizedException, Param } from '@nestjs/common';
 import { TenantsService } from './tenants.service';
+import { CreateTenantDto } from './dto/create-tenant.dto';
 import { JwtAuthGuard, RolesGuard, Roles } from '../auth/guards';
 
 @Controller('tenants')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class TenantsController {
     constructor(private tenantsService: TenantsService) { }
+
+    @Post()
+    @Roles('SUPER_ADMIN')
+    async create(@Body() createTenantDto: CreateTenantDto) {
+        return this.tenantsService.createTenantWithAdmin(createTenantDto);
+    }
+
+    @Get()
+    @Roles('SUPER_ADMIN')
+    async findAll() {
+        return this.tenantsService.findAll();
+    }
+
+    @Patch(':id')
+    @Roles('SUPER_ADMIN')
+    async updateTenant(@Param('id') id: string, @Body() body: any) {
+        return this.tenantsService.update(id, body);
+    }
+
+    @Delete(':id')
+    @Roles('SUPER_ADMIN')
+    async deleteTenant(@Param('id') id: string) {
+        return this.tenantsService.delete(id);
+    }
 
     @Get('me')
     @Roles('LAB_ADMIN', 'TECHNICIAN', 'VIEWER')

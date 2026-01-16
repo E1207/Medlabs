@@ -3,7 +3,8 @@ import { Button } from '@/components/ui-basic';
 import { Tabs, useToast } from '@/components/ui-dashboard';
 import { useAuth } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { Shield, Mail, Eye, EyeOff, Check, Send } from 'lucide-react';
+import { Shield, Mail, Eye, EyeOff, Check, Send, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type SmsProvider = 'twilio' | 'vonage' | 'generic';
 
@@ -24,6 +25,7 @@ interface SmtpConfig {
 }
 
 export function PlatformSettings() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { addToast } = useToast();
 
@@ -60,13 +62,21 @@ export function PlatformSettings() {
         maxDays: 90,
     });
 
+    // General State
+    const [generalConfig, setGeneralConfig] = React.useState({
+        maintenanceMode: false,
+        globalAnnouncement: '',
+    });
+
     React.useEffect(() => {
         fetch('/api/admin/config')
             .then(res => res.json())
             .then(data => {
                 if (data.sms) setSmsConfig(prev => ({ ...prev, ...data.sms }));
                 if (data.smtp) setSmtpConfig(prev => ({ ...prev, ...data.smtp }));
+                if (data.smtp) setSmtpConfig(prev => ({ ...prev, ...data.smtp }));
                 if (data.retention) setRetentionConfig(data.retention);
+                if (data.general) setGeneralConfig(data.general);
             })
             .catch(err => console.error(err));
     }, []);
@@ -80,6 +90,7 @@ export function PlatformSettings() {
                     sms: smsConfig,
                     smtp: smtpConfig,
                     retention: retentionConfig,
+                    general: generalConfig,
                 }),
             });
             addToast('Configuration saved successfully', 'success');
@@ -105,20 +116,64 @@ export function PlatformSettings() {
 
     const tabs = [
         {
+            id: 'general',
+            label: t('platform.tabs.general'),
+            content: (
+                <div className="space-y-6 max-w-xl">
+                    <div className="bg-white p-6 rounded-lg border shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="font-medium">{t('platform.general.maintenance')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('platform.general.maintenanceDesc')}</p>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={generalConfig.maintenanceMode}
+                                onChange={(e) => setGeneralConfig({ ...generalConfig, maintenanceMode: e.target.checked })}
+                                className="w-5 h-5 rounded text-purple-600 focus:ring-purple-500"
+                            />
+                        </div>
+                        {generalConfig.maintenanceMode && (
+                            <div className="bg-amber-50 border border-amber-200 p-3 rounded text-sm text-amber-800 flex gap-2">
+                                <AlertTriangle className="w-4 h-4 mt-0.5" />
+                                {t('platform.general.maintenanceWarn')}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="bg-white p-6 rounded-lg border shadow-sm">
+                        <label className="block text-sm font-medium mb-2">{t('platform.general.announcement')}</label>
+                        <textarea
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                            rows={3}
+                            placeholder="System will be down for maintenance..."
+                            value={generalConfig.globalAnnouncement}
+                            onChange={(e) => setGeneralConfig({ ...generalConfig, globalAnnouncement: e.target.value })}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">{t('platform.general.announcementDesc')}</p>
+                    </div>
+
+                    <Button onClick={saveConfig} className="gap-2">
+                        <Check className="w-4 h-4" /> Save General Settings
+                    </Button>
+                </div>
+            )
+        },
+        {
             id: 'sms',
-            label: 'SMS Gateways',
+            label: t('platform.tabs.sms'),
             content: (
                 <div className="space-y-6 max-w-xl">
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                         <Shield className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                         <div className="text-sm text-amber-800">
-                            <p className="font-medium">Sensitive Configuration</p>
-                            <p>Credentials are encrypted at rest. Changes apply immediately.</p>
+                            <p className="font-medium">{t('platform.sms.sensitive')}</p>
+                            <p>{t('platform.sms.sensitiveDesc')}</p>
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">SMS Provider</label>
+                        <label className="block text-sm font-medium mb-1">{t('platform.sms.provider')}</label>
                         <select
                             className="w-full border rounded-lg px-3 py-2"
                             value={smsConfig.provider}
@@ -131,7 +186,7 @@ export function PlatformSettings() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">API Key</label>
+                        <label className="block text-sm font-medium mb-1">{t('platform.sms.apiKey')}</label>
                         <input
                             type="text"
                             className="w-full border rounded-lg px-3 py-2 font-mono text-sm"
@@ -142,7 +197,7 @@ export function PlatformSettings() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">API Secret</label>
+                        <label className="block text-sm font-medium mb-1">{t('platform.sms.apiSecret')}</label>
                         <div className="relative">
                             <input
                                 type={showSmsSecret ? 'text' : 'password'}
@@ -163,7 +218,7 @@ export function PlatformSettings() {
 
                     {smsConfig.provider === 'generic' && (
                         <div>
-                            <label className="block text-sm font-medium mb-1">Base URL</label>
+                            <label className="block text-sm font-medium mb-1">{t('platform.sms.baseUrl')}</label>
                             <input
                                 type="url"
                                 className="w-full border rounded-lg px-3 py-2 font-mono text-sm"
@@ -177,7 +232,7 @@ export function PlatformSettings() {
                     <div className="flex gap-3 pt-4">
                         <Button onClick={handleTestSmsConnection} disabled={testingConnection} className="bg-gray-200 text-gray-800 hover:bg-gray-300">
                             <Send className="w-4 h-4 mr-2" />
-                            {testingConnection ? 'Sending...' : 'Test Connection'}
+                            {testingConnection ? 'Sending...' : t('platform.sms.testButton')}
                         </Button>
                         <Button onClick={saveConfig}>
                             <Check className="w-4 h-4 mr-2" />
@@ -264,7 +319,7 @@ export function PlatformSettings() {
 
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">Global Default Retention (Days)</label>
+                            <label className="block text-sm font-medium mb-1">{t('platform.retention.default')}</label>
                             <input
                                 type="number"
                                 className="w-full border rounded-lg px-3 py-2"
@@ -272,12 +327,12 @@ export function PlatformSettings() {
                                 onChange={(e) => setRetentionConfig({ ...retentionConfig, defaultDays: parseInt(e.target.value) || 30 })}
                             />
                             <p className="text-xs text-muted-foreground mt-1">
-                                Default duration for new laboratories. (Standard: 30 days)
+                                {t('platform.retention.defaultDesc')}
                             </p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Maximum Allowed Retention (Days)</label>
+                            <label className="block text-sm font-medium mb-1">{t('platform.retention.max')}</label>
                             <input
                                 type="number"
                                 className="w-full border rounded-lg px-3 py-2"
@@ -285,7 +340,7 @@ export function PlatformSettings() {
                                 onChange={(e) => setRetentionConfig({ ...retentionConfig, maxDays: parseInt(e.target.value) || 90 })}
                             />
                             <p className="text-xs text-muted-foreground mt-1">
-                                Hard limit. Labs cannot set a value higher than this to ensure compliance.
+                                {t('platform.retention.maxDesc')}
                             </p>
                         </div>
                     </div>
@@ -302,8 +357,8 @@ export function PlatformSettings() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold">Platform Settings</h1>
-                <p className="text-muted-foreground">Configure global SMS and email settings</p>
+                <h1 className="text-2xl font-bold">{t('platform.title')}</h1>
+                <p className="text-muted-foreground">{t('platform.subtitle')}</p>
             </div>
             <Tabs tabs={tabs} defaultTab="sms" />
         </div>

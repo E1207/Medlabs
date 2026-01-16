@@ -62,13 +62,23 @@ export function GuestAccess() {
                 body: JSON.stringify({ token }),
             });
 
+            // Check for anonymized document (archived)
             if (res.status === 410) {
+                const data = await res.json().catch(() => ({}));
+                if (data.isAnonymized) {
+                    setError({
+                        title: 'Dossier Archivé',
+                        message: 'Ce résultat a été archivé pour des raisons de sécurité. Veuillez contacter le laboratoire pour obtenir une copie.'
+                    });
+                    setState('error');
+                    return;
+                }
                 window.location.href = '/expired';
                 return;
             }
 
             if (res.status === 401) {
-                setError({ title: 'Link Expired', message: 'This link has expired. Please contact the laboratory for a new link.' });
+                setError({ title: 'Lien Expiré', message: 'Ce lien a expiré. Veuillez contacter le laboratoire pour obtenir un nouveau lien.' });
                 setState('error');
                 return;
             }
@@ -81,7 +91,7 @@ export function GuestAccess() {
             setMaskedPhone(data.message?.match(/\+\d+\*+\d+/)?.[0] || '***');
             setState('otp');
         } catch {
-            setError({ title: 'Connection Error', message: 'Unable to connect to the server. Please try again.' });
+            setError({ title: 'Erreur de Connexion', message: 'Impossible de se connecter au serveur. Veuillez réessayer.' });
             setState('error');
         } finally {
             setIsLoading(false);

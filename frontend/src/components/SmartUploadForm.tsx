@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { UploadCloud, FileCheck, AlertTriangle, Loader2, X } from 'lucide-react';
 import { Button, Input, Label, Card, CardHeader, CardTitle, CardContent } from './ui-basic';
+import { useTranslation } from 'react-i18next';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Worker configuration
@@ -17,6 +18,7 @@ interface FormData {
 }
 
 export function SmartUploadForm() {
+    const { t } = useTranslation();
     const [file, setFile] = useState<File | null>(null);
     const [dragging, setDragging] = useState(false);
     const [parsing, setParsing] = useState(false);
@@ -83,7 +85,7 @@ export function SmartUploadForm() {
 
         } catch (err) {
             console.error(err);
-            setError("Failed to parse PDF text. Please fill manually.");
+            setError(t('errors.parsing'));
         } finally {
             setParsing(false);
         }
@@ -99,11 +101,11 @@ export function SmartUploadForm() {
             const droppedFile = e.dataTransfer.files[0];
 
             if (droppedFile.type !== 'application/pdf') {
-                setError("Only PDF files are allowed.");
+                setError(t('errors.pdf_only'));
                 return;
             }
             if (droppedFile.size > 10 * 1024 * 1024) { // 10MB
-                setError("File size exceeds 10MB.");
+                setError(t('errors.file_size'));
                 return;
             }
 
@@ -116,7 +118,7 @@ export function SmartUploadForm() {
         if (e.target.files && e.target.files[0]) {
             const selFile = e.target.files[0];
             if (selFile.type !== 'application/pdf') {
-                setError("Only PDF files are allowed.");
+                setError(t('errors.pdf_only'));
                 return;
             }
             setFile(selFile);
@@ -133,16 +135,16 @@ export function SmartUploadForm() {
         setError(null);
 
         if (!validatePhone(form.phone)) {
-            setError("Invalid Mobile Phone. Must be E.164 (e.g., +2376...).");
+            setError(t('errors.invalid_phone'));
             return;
         }
         if (!file) {
-            setError("No file uploaded.");
+            setError(t('errors.no_file'));
             return;
         }
 
         if (!form.dob) {
-            setError("Date of Birth is required for security fallback.");
+            setError(t('errors.required'));
             return;
         }
 
@@ -172,7 +174,7 @@ export function SmartUploadForm() {
 
             if (!response.ok) {
                 const errData = await response.json();
-                throw new Error(errData.message || 'Upload failed');
+                throw new Error(errData.message || t('errors.upload_failed'));
             }
 
             setSuccess(true);
@@ -204,14 +206,14 @@ export function SmartUploadForm() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <UploadCloud className="w-6 h-6 text-primary" />
-                    Smart Result Upload
+                    {t('upload.title')}
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 {success && (
                     <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3 text-green-700">
                         <FileCheck className="w-5 h-5" />
-                        <span>Result uploaded successfully! Ready for next.</span>
+                        <span>{t('upload.success')}</span>
                         <button onClick={() => setSuccess(false)} className="ml-auto p-1 hover:bg-green-100 rounded">
                             <X className="w-4 h-4" />
                         </button>
@@ -238,8 +240,8 @@ export function SmartUploadForm() {
                         />
                         <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
                             <UploadCloud className={`w-12 h-12 mb-4 ${dragging ? 'text-primary' : 'text-gray-400'}`} />
-                            <p className="text-lg font-medium text-gray-700">Drag & Drop PDF here</p>
-                            <p className="text-sm text-gray-500 mt-1">or click to browse (Max 10MB)</p>
+                            <p className="text-lg font-medium text-gray-700">{t('upload.dragDrop')}</p>
+                            <p className="text-sm text-gray-500 mt-1">{t('upload.browse')}</p>
                         </label>
                     </div>
                 ) : (
@@ -249,7 +251,7 @@ export function SmartUploadForm() {
                             <p className="font-medium truncate">{file.name}</p>
                             <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                         </div>
-                        {parsing && <span className="text-xs text-blue-500 mr-3 animate-pulse">Parsing...</span>}
+                        {parsing && <span className="text-xs text-blue-500 mr-3 animate-pulse">{t('upload.parsing')}</span>}
                         <button onClick={removeFile} className="text-gray-400 hover:text-red-500 p-1">
                             <X className="w-5 h-5" />
                         </button>
@@ -266,17 +268,17 @@ export function SmartUploadForm() {
                 <form onSubmit={handleSubmit} className="mt-8 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="folderRef">Folder Ref *</Label>
+                            <Label htmlFor="folderRef">{t('upload.folderRef')} *</Label>
                             <Input
                                 id="folderRef"
                                 required
                                 value={form.folderRef}
                                 onChange={e => setForm({ ...form, folderRef: e.target.value })}
-                                placeholder="ex: DOS-2024-001"
+                                placeholder="DOS-2024-..."
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="dob">Date of Birth *</Label>
+                            <Label htmlFor="dob">{t('upload.dob')} *</Label>
                             <Input
                                 id="dob"
                                 required
@@ -289,7 +291,7 @@ export function SmartUploadForm() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName">First Name</Label>
+                            <Label htmlFor="firstName">{t('upload.firstName')}</Label>
                             <Input
                                 id="firstName"
                                 value={form.firstName}
@@ -297,7 +299,7 @@ export function SmartUploadForm() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">Last Name</Label>
+                            <Label htmlFor="lastName">{t('upload.lastName')}</Label>
                             <Input
                                 id="lastName"
                                 value={form.lastName}
@@ -308,7 +310,7 @@ export function SmartUploadForm() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Patient Email *</Label>
+                            <Label htmlFor="email">{t('upload.email')} *</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -320,7 +322,7 @@ export function SmartUploadForm() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="phone" className="flex justify-between">
-                                <span>Mobile Phone *</span>
+                                <span>{t('upload.phone')} *</span>
                                 <span className="text-xs text-gray-500 font-normal">Strict E.164 (+237...)</span>
                             </Label>
                             <Input
@@ -332,7 +334,7 @@ export function SmartUploadForm() {
                                 className={form.phone && !validatePhone(form.phone) ? 'border-red-500 focus-visible:ring-red-500' : ''}
                             />
                             {form.phone && !validatePhone(form.phone) && (
-                                <p className="text-xs text-red-500">Invalid format. Must be +237...</p>
+                                <p className="text-xs text-red-500">{t('errors.invalid_phone')}</p>
                             )}
                         </div>
                     </div>
@@ -340,7 +342,7 @@ export function SmartUploadForm() {
                     <div className="pt-4">
                         <Button type="submit" className="w-full" disabled={loading || !file || !validatePhone(form.phone) || !form.dob}>
                             {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                            {loading ? 'Uploading...' : 'Send Result'}
+                            {loading ? t('upload.btn_uploading') : t('upload.btn_send')}
                         </Button>
                     </div>
                 </form>

@@ -15,14 +15,11 @@ export class AuthService {
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
+        console.log('Login Attempt:', email);
         const user = await this.prisma.user.findUnique({ where: { email } });
-        if (user) {
-            // Check for dummy password usage in dev/test
-            if (pass === 'dummy' && user.passwordHash === 'dummy') {
-                const { passwordHash, ...result } = user;
-                return result;
-            }
+        console.log('User Found:', user ? 'Yes' : 'No');
 
+        if (user) {
             const isMatch = await bcrypt.compare(pass, user.passwordHash);
             if (isMatch) {
                 const { passwordHash, ...result } = user;
@@ -48,9 +45,7 @@ export class AuthService {
                 id: user.id,
                 email: user.email,
                 role: user.role,
-                tenantName: user.tenant?.name,
-                firstName: user.firstName,
-                lastName: user.lastName
+                tenantId: user.tenantId
             }
         };
     }
@@ -105,5 +100,33 @@ export class AuthService {
         } catch (e) {
             throw new BadRequestException('Invalid or expired token');
         }
+    }
+
+    async impersonate(targetUserId: string) {
+        // Target User
+        const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        // Generate Token for this user
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            role: user.role,
+            tenantId: user.tenantId,
+            isImpersonated: true // Flag for frontend or audit
+        };
+
+        return {
+            access_token: this.jwtService.sign(payload, {
+                secret: process.env.JWT_SECRET || 'dev_secret_key_123',
+                expiresIn: '1h' // Short lived
+            }),
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                tenantId: user.tenantId
+            }
+        };
     }
 }

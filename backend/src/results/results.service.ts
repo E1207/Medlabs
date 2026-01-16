@@ -86,7 +86,10 @@ export class ResultsService {
         const take = 10;
         const skip = (page - 1) * take;
 
-        const where: any = { tenantId };
+        const where: any = {};
+        if (tenantId) {
+            where.tenantId = tenantId;
+        }
 
         if (search) {
             where.OR = [
@@ -208,7 +211,26 @@ export class ResultsService {
         // Update Status
         await this.prisma.document.update({
             where: { id: documentId },
-            data: { status: 'NOTIFIED' },
+            data: { status: 'NOTIFIED' }
         });
+    }
+
+    async remove(tenantId: string, id: string) {
+        // If tenantId is null (Super Admin), we skip the check
+        const where: any = { id };
+        if (tenantId) {
+            where.tenantId = tenantId;
+        }
+
+        const doc = await this.prisma.document.findFirst({ where });
+
+        if (!doc) throw new NotFoundException('Document not found');
+
+        await this.prisma.document.delete({
+            where: { id }
+        });
+
+        // TODO: Delete file from S3
+        return { message: 'Document deleted successfully' };
     }
 }

@@ -1,0 +1,138 @@
+{
+    "nav": {
+        "tenants": "Tenants",
+        "users": "Users & Staff",
+        "directory": "User Directory",
+        "platform": "Platform Settings",
+        "audit": "Audit Logs",
+        "team": "My Team",
+        "sms": "SMS Usage",
+        "api": "Developer API",
+        "labSettings": "Lab Settings",
+        "upload": "New Result",
+        "history": "Sent History",
+        "quickUpload": "Upload Results",
+        "signOut": "Sign Out",
+        "role": "Role",
+        "tenant": "Tenant"
+    },
+    "auth": {
+        "signInTitle": "Partner Login",
+        "signInSubtitle": "Access your secure dashboard",
+        "emailLabel": "Email Address",
+        "passwordLabel": "Password",
+        "forgotPassword": "Forgot password?",
+        "signInButton": "Sign In",
+        "signingIn": "Signing in...",
+        "impersonationBanner": "You are impersonating",
+        "switchBack": "Switch Back",
+        "notPartner": "Not a partner yet?",
+        "contactSales": "Contact Sales"
+    },
+    "common": {
+        "cancel": "Cancel",
+        "save": "Save Changes",
+        "create": "Create",
+        "delete": "Delete",
+        "edit": "Edit",
+        "status": "Status",
+        "actions": "Actions",
+        "warning": "Warning",
+        "success": "Success",
+        "error": "Error"
+    },
+    "tenants": {
+        "title": "Tenant Management",
+        "subtitle": "Manage all registered laboratories",
+        "createButton": "Create Tenant",
+        "stats": {
+            "total": "Total Tenants",
+            "active": "Active Tenants",
+            "sms": "Total SMS Credits"
+        },
+        "table": {
+            "name": "Laboratory Name",
+            "senderId": "Sender ID",
+            "balance": "SMS Balance",
+            "users": "Users",
+            "credits": "credits"
+        },
+        "modals": {
+            "createTitle": "Create New Tenant",
+            "editTitle": "Edit Tenant",
+            "configTitle": "Edit Config",
+            "nameLabel": "Laboratory Name",
+            "slugLabel": "Slug (URL)",
+            "niuLabel": "NIU (Tax ID)",
+            "rccmLabel": "RCCM",
+            "emailLabel": "Contact Email",
+            "passwordLabel": "Admin Password",
+            "quotaLabel": "Initial SMS Quota",
+            "senderIdLabel": "SMS Sender ID",
+            "creditsLabel": "Add SMS Credits",
+            "senderIdWarning": "Only change this after obtaining Sender ID whitelisting from the Telecom Operator."
+        }
+    },
+    "platform": {
+        "title": "Platform Settings",
+        "subtitle": "Configure global SMS and email settings",
+        "tabs": {
+            "general": "General",
+            "sms": "SMS Gateways",
+            "smtp": "SMTP (Email)",
+            "retention": "Data Retention"
+        },
+        "general": {
+            "maintenance": "Maintenance Mode",
+            "maintenanceDesc": "Disable access for non-admin users.",
+            "maintenanceWarn": "This will block all technicians and patients from logging in.",
+            "announcement": "Global Announcement",
+            "announcementDesc": "This message will be displayed on the login page."
+        },
+        "sms": {
+            "sensitive": "Sensitive Configuration",
+            "sensitiveDesc": "Credentials are encrypted at rest. Changes apply immediately.",
+            "provider": "SMS Provider",
+            "apiKey": "API Key",
+            "apiSecret": "API Secret",
+            "baseUrl": "Base URL",
+            "testButton": "Test Connection"
+        },
+        "retention": {
+            "compliance": "HDS / GDPR Compliance",
+            "complianceDesc": "Configure automated deletion of medical documents to minimize data footprint.",
+            "default": "Global Default Retention (Days)",
+            "defaultDesc": "Default duration for new laboratories.",
+            "max": "Maximum Allowed Retention (Days)",
+            "maxDesc": "Hard limit. Labs cannot set a value higher than this."
+        }
+    },
+    "audit": {
+        "title": "Audit Logs",
+        "subtitle": "Traceability of sensitive actions across the platform.",
+        "table": {
+            "date": "Date",
+            "action": "Action",
+            "description": "Description",
+            "context": "Context"
+        }
+    },
+    "dashboard": {
+        "title": "MedLab Dashboard",
+        "welcome": "Welcome back"
+    },
+    "users": {
+        "title": "User Directory",
+        "subtitle": "Manage all users across the platform.",
+        "createButton": "Create User",
+        "searchPlaceholder": "Search by name, email or Lab...",
+        "allRoles": "All Roles",
+        "table": {
+            "user": "User",
+            "role": "Role",
+            "organization": "Organization",
+            "status": "Status"
+        },
+        "impersonateConfirm": "You are about to log in as this user. You will see exactly what they see. Perform actions with caution."
+    }
+}

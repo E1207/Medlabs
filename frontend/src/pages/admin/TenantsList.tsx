@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui-basic';
 import { Badge, Modal, DataTable, StatCard, useToast } from '@/components/ui-dashboard';
-import { Building2, Plus, Users, MessageSquare } from 'lucide-react';
+import { Plus, Users, Building2, MessageSquare, Edit2, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Tenant {
     id: string;
@@ -12,19 +14,18 @@ interface Tenant {
     smsSenderId: string;
     createdAt: string;
     usersCount: number;
+    niu?: string;
+    rccm?: string;
+    contactEmail?: string;
+    maxRetentionDays?: number;
 }
 
-// Mock data
-const MOCK_TENANTS: Tenant[] = [
-    { id: '1', name: 'Laboratoire Mvolyé', slug: 'labo-mvolye', isActive: true, smsBalance: 450, smsSenderId: 'MEDLAB', createdAt: '2025-12-01', usersCount: 5 },
-    { id: '2', name: 'Centre Médical Bassa', slug: 'cm-bassa', isActive: true, smsBalance: 120, smsSenderId: 'MEDRESULT', createdAt: '2025-11-15', usersCount: 3 },
-    { id: '3', name: 'Clinique Universitaire', slug: 'clinique-univ', isActive: false, smsBalance: 0, smsSenderId: 'MEDLAB', createdAt: '2025-10-01', usersCount: 8 },
-];
-
 export function TenantsList() {
+    const { t } = useTranslation();
     const { addToast } = useToast();
-    const [tenants, setTenants] = React.useState<Tenant[]>(MOCK_TENANTS);
+    const [tenants, setTenants] = React.useState<Tenant[]>([]);
     const [createModalOpen, setCreateModalOpen] = React.useState(false);
+    const [editModalOpen, setEditModalOpen] = React.useState(false);
     const [configModalOpen, setConfigModalOpen] = React.useState(false);
     const [selectedTenant, setSelectedTenant] = React.useState<Tenant | null>(null);
 
@@ -35,6 +36,8 @@ export function TenantsList() {
         rccm: '',
         contactEmail: '',
         initialSmsQuota: 100,
+        adminPassword: '',
+        maxRetentionDays: 30,
     });
 
     const [configData, setConfigData] = React.useState({
@@ -42,22 +45,98 @@ export function TenantsList() {
         smsTopup: 0,
     });
 
-    const handleCreate = async () => {
-        const newTenant: Tenant = {
-            id: Date.now().toString(),
-            name: formData.name,
-            slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-'),
-            isActive: true,
-            smsBalance: formData.initialSmsQuota,
-            smsSenderId: 'MEDLAB', // Default
-            createdAt: new Date().toISOString().split('T')[0],
-            usersCount: 0,
-        };
+    const fetchTenants = async () => {
+        try {
+            const res = await api.get('/tenants');
+            if (res.ok) {
+                const data = await res.json();
+                setTenants(data);
+            }
+        } catch (error) {
+            console.error(error);
+            addToast('Failed to load tenants', 'error');
+        }
+    };
 
-        setTenants([...tenants, newTenant]);
-        setCreateModalOpen(false);
-        setFormData({ name: '', slug: '', niu: '', rccm: '', contactEmail: '', initialSmsQuota: 100 });
-        addToast(`Tenant "${newTenant.name}" created successfully`, 'success');
+    React.useEffect(() => {
+        fetchTenants();
+    }, []);
+
+    const handleCreate = async () => {
+        try {
+            const payload = {
+                name: formData.name,
+                slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                niu: formData.niu,
+                rccm: formData.rccm,
+                contactEmail: formData.contactEmail,
+                initialSmsQuota: formData.initialSmsQuota,
+                adminEmail: formData.contactEmail,
+                adminPassword: formData.adminPassword,
+            };
+
+            const res = await api.post('/tenants', payload);
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.message || 'Failed to create tenant');
+            }
+
+            addToast(`Tenant "${formData.name}" created successfully`, 'success');
+            setCreateModalOpen(false);
+            setFormData({ name: '', slug: '', niu: '', rccm: '', contactEmail: '', initialSmsQuota: 100, adminPassword: '', maxRetentionDays: 30 });
+            fetchTenants();
+        } catch (error: any) {
+            addToast(error.message, 'error');
+        }
+    };
+
+    const handleEdit = async () => {
+        if (!selectedTenant) return;
+        try {
+            const payload = {
+                name: formData.name,
+                slug: formData.slug,
+                niu: formData.niu,
+                rccm: formData.rccm,
+                contactEmail: formData.contactEmail,
+                maxRetentionDays: formData.maxRetentionDays,
+            };
+
+            const res = await api.patch(`/tenants/${selectedTenant.id}`, payload);
+            if (!res.ok) throw new Error('Failed to update tenant');
+
+            addToast('Tenant updated successfully', 'success');
+            setEditModalOpen(false);
+            fetchTenants();
+        } catch (error) {
+            addToast('Failed to update tenant', 'error');
+        }
+    };
+
+    const handleDelete = async (tenantId: string) => {
+        if (!confirm('Are you sure you want to suspend this laboratory? Access will be revoked immediately.')) return;
+        try {
+            const res = await api.delete(`/tenants/${tenantId}`);
+            if (!res.ok) throw new Error('Failed to suspend tenant');
+            addToast('Tenant suspended successfully', 'success');
+            fetchTenants();
+        } catch (error) {
+            addToast('Failed to suspend tenant', 'error');
+        }
+    };
+
+    const openEdit = (tenant: Tenant) => {
+        setSelectedTenant(tenant);
+        setFormData({
+            ...formData,
+            name: tenant.name,
+            slug: tenant.slug,
+            niu: tenant.niu || '',
+            rccm: tenant.rccm || '',
+            contactEmail: tenant.contactEmail || '',
+            maxRetentionDays: tenant.maxRetentionDays || 30,
+        });
+        setEditModalOpen(true);
     };
 
     const handleOpenConfig = (tenant: Tenant) => {
@@ -72,39 +151,29 @@ export function TenantsList() {
     const handleSaveConfig = () => {
         if (!selectedTenant) return;
 
-        // Validation: Max 11 alphanumeric chars
         const senderIdRegex = /^[a-zA-Z0-9]{3,11}$/;
         if (!senderIdRegex.test(configData.smsSenderId)) {
             addToast('Sender ID must be 3-11 alphanumeric characters.', 'error');
             return;
         }
 
-        setTenants(tenants.map(t =>
-            t.id === selectedTenant.id
-                ? {
-                    ...t,
-                    smsSenderId: configData.smsSenderId,
-                    smsBalance: t.smsBalance + configData.smsTopup
-                }
-                : t
-        ));
-
-        setConfigModalOpen(false);
+        // Mock update for now or implement API endpoint for update
         addToast(`Configuration for ${selectedTenant.name} updated`, 'success');
+        setConfigModalOpen(false);
     };
 
     const columns = [
-        { key: 'name', header: 'Laboratory Name' },
+        { key: 'name', header: t('tenants.table.name') },
         {
             key: 'smsSenderId',
-            header: 'Sender ID',
+            header: t('tenants.table.senderId'),
             render: (row: Tenant) => (
                 <code className="text-xs font-mono bg-gray-100 px-1 rounded">{row.smsSenderId}</code>
             )
         },
         {
             key: 'isActive',
-            header: 'Status',
+            header: t('common.status'),
             render: (row: Tenant) => (
                 <Badge variant={row.isActive ? 'success' : 'danger'}>
                     {row.isActive ? 'Active' : 'Suspended'}
@@ -113,56 +182,71 @@ export function TenantsList() {
         },
         {
             key: 'smsBalance',
-            header: 'SMS Balance',
+            header: t('tenants.table.balance'),
             render: (row: Tenant) => (
                 <span className={row.smsBalance < 100 ? 'text-amber-600 font-medium' : ''}>
-                    {row.smsBalance} credits
+                    {row.smsBalance} {t('tenants.table.credits')}
                 </span>
             ),
+        },
+        {
+            key: 'usersCount',
+            header: t('tenants.table.users'),
+            render: (row: Tenant) => (
+                <div className="flex items-center gap-1 text-slate-600">
+                    <Users className="w-4 h-4" />
+                    <span>{row.usersCount || 0}</span>
+                </div>
+            )
         },
         {
             key: 'id',
             header: '',
             render: (row: Tenant) => (
-                <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => handleOpenConfig(row)}>
-                    Configure
-                </Button>
+                <div className="flex gap-2 justify-end">
+                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => openEdit(row)}>
+                        <Edit2 className="w-4 h-4 text-slate-500" />
+                    </Button>
+                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => handleOpenConfig(row)}>
+                        {t('tenants.modals.configTitle')}
+                    </Button>
+                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => handleDelete(row.id)}>
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                </div>
             )
         }
     ];
 
     const totalTenants = tenants.length;
     const activeTenants = tenants.filter((t) => t.isActive).length;
-    const totalSmsBalance = tenants.reduce((sum, t) => sum + t.smsBalance, 0);
+    const totalSmsBalance = tenants.reduce((sum, t) => sum + (t.smsBalance || 0), 0);
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold">Tenant Management</h1>
-                    <p className="text-muted-foreground">Manage all registered laboratories</p>
+                    <h1 className="text-2xl font-bold">{t('tenants.title')}</h1>
+                    <p className="text-muted-foreground">{t('tenants.subtitle')}</p>
                 </div>
                 <Button onClick={() => setCreateModalOpen(true)} className="gap-2">
                     <Plus className="w-4 h-4" />
-                    Create Tenant
+                    {t('tenants.createButton')}
                 </Button>
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard title="Total Tenants" value={totalTenants} icon={<Building2 className="w-8 h-8" />} />
-                <StatCard title="Active Tenants" value={activeTenants} icon={<Users className="w-8 h-8" />} />
-                <StatCard title="Total SMS Credits" value={totalSmsBalance} icon={<MessageSquare className="w-8 h-8" />} />
+                <StatCard title={t('tenants.stats.total')} value={totalTenants} icon={<Building2 className="w-8 h-8" />} />
+                <StatCard title={t('tenants.stats.active')} value={activeTenants} icon={<Users className="w-8 h-8" />} />
+                <StatCard title={t('tenants.stats.sms')} value={totalSmsBalance} icon={<MessageSquare className="w-8 h-8" />} />
             </div>
 
-            {/* Table */}
             <DataTable data={tenants} columns={columns} />
 
-            {/* Create Modal */}
-            <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Create New Tenant">
+            <Modal open={createModalOpen} onClose={() => setCreateModalOpen(false)} title={t('tenants.modals.createTitle')}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">Laboratory Name *</label>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.nameLabel')} *</label>
                         <input
                             type="text"
                             className="w-full border rounded-lg px-3 py-2"
@@ -183,7 +267,7 @@ export function TenantsList() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">NIU (Tax ID)</label>
+                            <label className="block text-sm font-medium mb-1">{t('tenants.modals.niuLabel')}</label>
                             <input
                                 type="text"
                                 className="w-full border rounded-lg px-3 py-2"
@@ -202,7 +286,7 @@ export function TenantsList() {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Contact Email *</label>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.emailLabel')} *</label>
                         <input
                             type="email"
                             className="w-full border rounded-lg px-3 py-2"
@@ -210,9 +294,20 @@ export function TenantsList() {
                             onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                             placeholder="contact@labo.cm"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">This email will be the initial Admin login.</p>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Initial SMS Quota</label>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.passwordLabel')} *</label>
+                        <input
+                            type="text"
+                            className="w-full border rounded-lg px-3 py-2 font-mono bg-gray-50"
+                            value={formData.adminPassword}
+                            onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
+                            placeholder="Initial Password"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.quotaLabel')}</label>
                         <input
                             type="number"
                             className="w-full border rounded-lg px-3 py-2"
@@ -222,20 +317,65 @@ export function TenantsList() {
                     </div>
                     <div className="flex gap-3 pt-4">
                         <Button onClick={() => setCreateModalOpen(false)} className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300">
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
-                        <Button onClick={handleCreate} className="flex-1" disabled={!formData.name || !formData.contactEmail}>
-                            Create Tenant
+                        <Button onClick={handleCreate} className="flex-1" disabled={!formData.name || !formData.contactEmail || !formData.adminPassword}>
+                            {t('common.create')}
                         </Button>
                     </div>
                 </div>
             </Modal>
 
-            {/* Config Modal */}
-            <Modal open={configModalOpen} onClose={() => setConfigModalOpen(false)} title={`Edit Config: ${selectedTenant?.name}`}>
+            <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Tenant">
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">SMS Sender ID</label>
+                        <label className="block text-sm font-medium mb-1">Laboratory Name</label>
+                        <input className="w-full border rounded-lg px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.slugLabel')}</label>
+                        <input className="w-full border rounded-lg px-3 py-2" value={formData.slug} onChange={e => setFormData({ ...formData, slug: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">NIU</label>
+                            <input className="w-full border rounded-lg px-3 py-2" value={formData.niu} onChange={e => setFormData({ ...formData, niu: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">RCCM</label>
+                            <input className="w-full border rounded-lg px-3 py-2" value={formData.rccm} onChange={e => setFormData({ ...formData, rccm: e.target.value })} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Contact Email</label>
+                        <input className="w-full border rounded-lg px-3 py-2" value={formData.contactEmail} onChange={e => setFormData({ ...formData, contactEmail: e.target.value })} />
+                    </div>
+                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                        <label className="block text-sm font-medium mb-1 text-amber-800">Plafond de Rétention (selon contrat)</label>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                min={7}
+                                max={365}
+                                className="w-24 border rounded-lg px-3 py-2"
+                                value={formData.maxRetentionDays}
+                                onChange={e => setFormData({ ...formData, maxRetentionDays: parseInt(e.target.value) || 30 })}
+                            />
+                            <span className="text-sm text-amber-700">jours</span>
+                        </div>
+                        <p className="text-xs text-amber-600 mt-1">Limite maximale que le Lab Admin peut configurer.</p>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <Button onClick={() => setEditModalOpen(false)} className="flex-1 bg-gray-200 text-gray-800">Cancel</Button>
+                        <Button onClick={handleEdit} className="flex-1">Save Changes</Button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal open={configModalOpen} onClose={() => setConfigModalOpen(false)} title={`${t('tenants.modals.configTitle')}: ${selectedTenant?.name}`}>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.senderIdLabel')}</label>
                         <input
                             type="text"
                             className="w-full border rounded-lg px-3 py-2 uppercase font-mono"
@@ -244,12 +384,12 @@ export function TenantsList() {
                             onChange={(e) => setConfigData({ ...configData, smsSenderId: e.target.value.toUpperCase() })}
                         />
                         <p className="text-xs text-muted-foreground mt-1 text-amber-600">
-                            Warning: Only change this after obtaining Sender ID whitelisting from the Telecom Operator.
+                            {t('tenants.modals.senderIdWarning')}
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Add SMS Credits</label>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.creditsLabel')}</label>
                         <input
                             type="number"
                             className="w-full border rounded-lg px-3 py-2"

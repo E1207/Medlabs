@@ -19,7 +19,8 @@ export function Settings() {
     // General Settings State
     const [labName, setLabName] = React.useState('Laboratoire Mvolyé');
     const [labAddress, setLabAddress] = React.useState('123 Rue du Centre, Yaoundé');
-    const [retentionDays, setRetentionDays] = React.useState(30);
+    const [configuredRetentionDays, setConfiguredRetentionDays] = React.useState(30);
+    const [maxRetentionDays, setMaxRetentionDays] = React.useState(30); // Limite du contrat
 
     React.useEffect(() => {
         // Fetch Tenant Settings
@@ -30,12 +31,23 @@ export function Settings() {
             .then(data => {
                 if (data.name) setLabName(data.name);
                 if (data.address) setLabAddress(data.address);
-                if (data.retentionDays) setRetentionDays(data.retentionDays);
+                if (data.configuredRetentionDays) setConfiguredRetentionDays(data.configuredRetentionDays);
+                if (data.maxRetentionDays) setMaxRetentionDays(data.maxRetentionDays);
             })
             .catch(err => console.error(err));
     }, []);
 
     const saveSettings = async () => {
+        // Validation: configuredRetentionDays must be <= maxRetentionDays
+        if (configuredRetentionDays > maxRetentionDays) {
+            addToast(`Votre plan actuel ne permet pas de dépasser ${maxRetentionDays} jours. Contactez le support.`, 'error');
+            return;
+        }
+        if (configuredRetentionDays < 7) {
+            addToast('La durée minimale est de 7 jours.', 'error');
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
             const res = await fetch('/api/tenants/me', {
@@ -45,9 +57,9 @@ export function Settings() {
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    name: labName, // Assuming we can update name
-                    address: labAddress, // Assuming we can update address
-                    retentionDays
+                    name: labName,
+                    address: labAddress,
+                    configuredRetentionDays: configuredRetentionDays
                 }),
             });
 
@@ -56,7 +68,7 @@ export function Settings() {
                 throw new Error(error.message || 'Failed to update settings');
             }
 
-            addToast('Settings saved successfully', 'success');
+            addToast('Paramètres enregistrés avec succès', 'success');
         } catch (err: any) {
             console.error(err);
             addToast(err.message, 'error');
@@ -170,24 +182,33 @@ export function Settings() {
                     </div>
 
                     <div className="pt-4 border-t">
-                        <h3 className="font-medium mb-3">File Availability Duration</h3>
+                        <h3 className="font-medium mb-3">Durée de disponibilité des résultats</h3>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
                             <Trash2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                             <div className="text-sm text-blue-800">
-                                <p className="font-medium">Automated Cleanup Policy</p>
-                                <p>After this delay, PDF files are permanently deleted from the secure server to ensure data minimisation.</p>
+                                <p className="font-medium">Politique d'anonymisation automatique</p>
+                                <p>Après ce délai, les dossiers seront anonymisés (les fichiers PDF supprimés, les données patient masquées) tout en préservant les statistiques.</p>
                             </div>
                         </div>
-                        <label className="block text-sm font-medium mb-1">Retention Period (Days)</label>
-                        <input
-                            type="number"
-                            className="w-full border rounded-lg px-3 py-2"
-                            value={retentionDays}
-                            onChange={(e) => setRetentionDays(parseInt(e.target.value) || 30)}
-                            min={1}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Warning: Patients will need to contact the secretariat for a copy after this period.
+                        <label className="block text-sm font-medium mb-2">Période de rétention</label>
+                        <div className="space-y-3">
+                            <input
+                                type="range"
+                                min={7}
+                                max={maxRetentionDays}
+                                value={configuredRetentionDays}
+                                onChange={(e) => setConfiguredRetentionDays(parseInt(e.target.value))}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                            />
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>7 jours</span>
+                                <span className="text-lg font-bold text-blue-600">{configuredRetentionDays} jours</span>
+                                <span>{maxRetentionDays} jours (max)</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2 bg-amber-50 border border-amber-100 p-2 rounded-md">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 inline mr-1" />
+                            Les patients devront contacter le secrétariat pour obtenir une copie après ce délai.
                         </p>
                     </div>
 

@@ -14,35 +14,45 @@ import {
     LogOut,
     ChevronDown,
     Upload,
+    User as UserIcon,
+    LayoutDashboard,
 } from 'lucide-react';
 
+import { useTranslation } from 'react-i18next';
+
 interface NavItem {
-    label: string;
+    label: string; // Now this will be a translation key actually, but handled in render
+    translationKey: string;
     path: string;
     icon: React.ReactNode;
 }
 
 const NAV_CONFIG: Record<UserRole, NavItem[]> = {
     SUPER_ADMIN: [
-        { label: 'Tenants', path: '/dashboard/tenants', icon: <Building2 className="w-5 h-5" /> },
-        { label: 'Users & Staff', path: '/dashboard/users', icon: <Users className="w-5 h-5" /> },
-        { label: 'Platform Settings', path: '/dashboard/platform', icon: <Settings className="w-5 h-5" /> },
-        { label: 'Audit Logs', path: '/dashboard/audit', icon: <FileText className="w-5 h-5" /> },
+        { label: 'Tenants', translationKey: 'nav.tenants', path: '/dashboard/tenants', icon: <Building2 className="w-5 h-5" /> },
+        { label: 'Users & Staff', translationKey: 'nav.users', path: '/dashboard/users', icon: <Users className="w-5 h-5" /> },
+        { label: 'User Directory', translationKey: 'nav.directory', path: '/dashboard/users-directory', icon: <UserIcon className="w-5 h-5" /> },
+        { label: 'Platform Settings', translationKey: 'nav.platform', path: '/dashboard/platform', icon: <Settings className="w-5 h-5" /> },
+        { label: 'Developer API', translationKey: 'nav.api', path: '/dashboard/api', icon: <Key className="w-5 h-5" /> },
+        { label: 'Audit Logs', translationKey: 'nav.audit', path: '/dashboard/audit', icon: <FileText className="w-5 h-5" /> },
     ],
     LAB_ADMIN: [
-        { label: 'My Team', path: '/dashboard/team', icon: <Users className="w-5 h-5" /> },
-        { label: 'SMS Usage', path: '/dashboard/sms', icon: <MessageSquare className="w-5 h-5" /> },
-        { label: 'Developer API', path: '/dashboard/api', icon: <Key className="w-5 h-5" /> },
-        { label: 'Lab Settings', path: '/dashboard/settings', icon: <Settings className="w-5 h-5" /> },
+        { label: 'Dashboard', translationKey: 'nav.dashboard', path: '/dashboard/lab-home', icon: <LayoutDashboard className="w-5 h-5" /> },
+        { label: 'New Result', translationKey: 'nav.upload', path: '/dashboard/upload', icon: <Upload className="w-5 h-5" /> },
+        { label: 'Sent History', translationKey: 'nav.history', path: '/dashboard/history', icon: <FileText className="w-5 h-5" /> },
+        { label: 'My Team', translationKey: 'nav.team', path: '/dashboard/team', icon: <Users className="w-5 h-5" /> },
+        { label: 'SMS Usage', translationKey: 'nav.sms', path: '/dashboard/sms', icon: <MessageSquare className="w-5 h-5" /> },
+        { label: 'Lab Settings', translationKey: 'nav.labSettings', path: '/dashboard/settings', icon: <Settings className="w-5 h-5" /> },
     ],
     TECHNICIAN: [
-        { label: 'New Result', path: '/dashboard/upload', icon: <Upload className="w-5 h-5" /> },
-        { label: 'Sent History', path: '/dashboard/history', icon: <FileText className="w-5 h-5" /> },
+        { label: 'New Result', translationKey: 'nav.upload', path: '/dashboard/upload', icon: <Upload className="w-5 h-5" /> },
+        { label: 'Sent History', translationKey: 'nav.history', path: '/dashboard/history', icon: <FileText className="w-5 h-5" /> },
     ],
 };
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const { user, logout, switchRole } = useAuth();
+    const { t, i18n } = useTranslation();
+    const { user, logout, switchRole, isImpersonating, stopImpersonating } = useAuth();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = React.useState(false);
     const [roleMenuOpen, setRoleMenuOpen] = React.useState(false);
@@ -67,9 +77,25 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <div className="w-10" />
             </header>
 
+
+
             {/* Sidebar Overlay (Mobile) */}
             {sidebarOpen && (
                 <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setSidebarOpen(false)} />
+            )}
+
+            {/* Impersonation Banner */}
+            {isImpersonating && (
+                <div className="fixed top-0 left-0 right-0 z-[60] h-10 bg-amber-500 text-white flex items-center justify-center text-sm font-medium px-4">
+                    <span>{t('auth.impersonationBanner')} <strong>{user.email}</strong></span>
+                    <button
+                        onClick={stopImpersonating}
+                        className="ml-4 bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs transition-colors"
+                    >
+                        {t('auth.switchBack')}
+                    </button>
+                    <div className="lg:ml-64" />
+                </div>
             )}
 
             {/* Sidebar */}
@@ -89,42 +115,28 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     </button>
                 </div>
 
-                {/* Role Switcher (Dev Only) */}
-                <div className="p-4 border-b">
-                    <div className="relative">
+                <div className="p-4 border-b space-y-4">
+                    {/* Role Switcher Removed for Production Safety */}
+
+                    {/* Language Switcher */}
+                    <div className="flex gap-2">
                         <button
-                            onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                            className="w-full flex items-center justify-between p-2 bg-gray-100 rounded-lg text-sm"
+                            onClick={() => i18n.changeLanguage('fr')}
+                            className={cn("flex-1 py-1 text-xs rounded border transition-colors", i18n.language.startsWith('fr') ? "bg-blue-50 border-blue-200 text-blue-700 font-medium" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50")}
                         >
-                            <span>
-                                <span className="text-muted-foreground">Role:</span>{' '}
-                                <span className="font-medium">{user.role}</span>
-                            </span>
-                            <ChevronDown className="w-4 h-4" />
+                            Français
                         </button>
-                        {roleMenuOpen && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg overflow-hidden">
-                                {(['SUPER_ADMIN', 'LAB_ADMIN', 'TECHNICIAN'] as UserRole[]).map((role) => (
-                                    <button
-                                        key={role}
-                                        onClick={() => {
-                                            switchRole(role);
-                                            setRoleMenuOpen(false);
-                                        }}
-                                        className={cn(
-                                            'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
-                                            user.role === role && 'bg-primary/10 font-medium'
-                                        )}
-                                    >
-                                        {role}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                        <button
+                            onClick={() => i18n.changeLanguage('en')}
+                            className={cn("flex-1 py-1 text-xs rounded border transition-colors", i18n.language.startsWith('en') ? "bg-blue-50 border-blue-200 text-blue-700 font-medium" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50")}
+                        >
+                            English
+                        </button>
                     </div>
+
                     {user.tenantName && (
-                        <p className="text-xs text-muted-foreground mt-2 truncate">
-                            Tenant: {user.tenantName}
+                        <p className="text-xs text-muted-foreground truncate">
+                            {t('nav.tenant')}: {user.tenantName}
                         </p>
                     )}
                 </div>
@@ -144,18 +156,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                             )}
                         >
                             {item.icon}
-                            {item.label}
+                            {t(item.translationKey)}
                         </Link>
                     ))}
-
-                    {/* Quick Upload Link */}
-                    <Link
-                        to="/"
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-gray-100"
-                    >
-                        <Upload className="w-5 h-5" />
-                        Upload Results
-                    </Link>
                 </nav>
 
                 {/* User Info & Logout */}
@@ -174,13 +177,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
                     >
                         <LogOut className="w-4 h-4" />
-                        Sign Out
+                        {t('nav.signOut')}
                     </button>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+            <main className={cn("lg:ml-64 min-h-screen transition-all", isImpersonating ? "pt-24 lg:pt-10" : "pt-16 lg:pt-0")}>
                 <div className="p-6">{children}</div>
             </main>
         </div>

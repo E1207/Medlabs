@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
+import './i18n'; // Initialize i18n
 import { Landing } from './pages/public/Landing.tsx'
 import { Login } from './pages/auth/Login.tsx'
 import { ForgotPassword } from './pages/auth/ForgotPassword.tsx'
@@ -24,13 +25,22 @@ import { SmartUploadForm } from './components/SmartUploadForm.tsx'
 
 
 
+import AnalyticsDashboard from './pages/lab/AnalyticsDashboard.tsx'
+import { DashboardRedirect } from './components/DashboardRedirect.tsx'
+
 function DashboardRoutes() {
   return (
     <DashboardLayout>
       <Routes>
+        {/* Lab Admin Dashboard */}
+        <Route path="lab-home" element={<AnalyticsDashboard />} />
+
+        {/* Super Admin Routes */}
         <Route path="tenants" element={<TenantsList />} />
         <Route path="users" element={<UsersList />} />
         <Route path="platform" element={<PlatformSettings />} />
+
+        {/* Lab Admin Routes */}
         <Route path="team" element={<TeamManagement />} />
         <Route path="settings" element={<Settings />} />
         <Route path="sms" element={<Settings />} />
@@ -41,7 +51,10 @@ function DashboardRoutes() {
         <Route path="upload" element={<div className="bg-white p-6 rounded-lg shadow"><h2 className="text-xl font-bold mb-4">New Result</h2><SmartUploadForm /></div>} />
 
         <Route path="audit" element={<div className="text-muted-foreground">Audit Logs (Coming Soon)</div>} />
-        <Route path="*" element={<TenantsList />} />
+
+        {/* Default redirect based on role */}
+        <Route index element={<DashboardRedirect />} />
+        <Route path="*" element={<DashboardRedirect />} />
       </Routes>
     </DashboardLayout>
   )

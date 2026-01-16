@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Patch, UseGuards, UseInterceptors, UploadedFile, Body, Query, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, UseGuards, UseInterceptors, UploadedFile, Body, Query, Param } from '@nestjs/common';
 import { ResultsService } from './results.service';
 import { CreateResultDto } from './dto/create-result.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -47,5 +47,11 @@ export class ResultsController {
         // Force tenantId from authenticated user
         const tenantId = user.tenantId;
         return this.resultsService.create(createResultDto, file, tenantId, user.id);
+    }
+
+    @Delete(':id')
+    @Roles('LAB_ADMIN', 'SUPER_ADMIN')
+    remove(@User() user: any, @Param('id') id: string) {
+        return this.resultsService.remove(user.tenantId, id);
     }
 }

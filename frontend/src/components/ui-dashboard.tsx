@@ -76,7 +76,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const [toasts, setToasts] = React.useState<Toast[]>([]);
 
     const addToast = (message: string, type: Toast['type'] = 'info') => {
-        const id = Date.now().toString();
+        const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         setToasts((prev) => [...prev, { id, message, type }]);
         setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -162,9 +162,10 @@ interface DataTableProps<T> {
     data: T[];
     columns: Column<T>[];
     onRowClick?: (row: T) => void;
+    rowClassName?: (row: T) => string;
 }
 
-export function DataTable<T extends { id: string }>({ data, columns, onRowClick }: DataTableProps<T>) {
+export function DataTable<T extends { id: string }>({ data, columns, onRowClick, rowClassName }: DataTableProps<T>) {
     return (
         <div className="overflow-x-auto border rounded-lg">
             <table className="w-full">
@@ -182,7 +183,11 @@ export function DataTable<T extends { id: string }>({ data, columns, onRowClick 
                         <tr
                             key={row.id}
                             onClick={() => onRowClick?.(row)}
-                            className={cn('hover:bg-gray-50', onRowClick && 'cursor-pointer')}
+                            className={cn(
+                                'hover:bg-gray-50 transition-colors',
+                                onRowClick && 'cursor-pointer',
+                                rowClassName?.(row)
+                            )}
                         >
                             {columns.map((col) => (
                                 <td key={String(col.key)} className="px-4 py-3 text-sm">
