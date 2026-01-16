@@ -1,0 +1,188 @@
+import * as React from 'react';
+import { Link, useLocation, Navigate } from 'react-router-dom';
+import { useAuth, UserRole } from '@/context/AuthContext';
+import { cn } from '@/lib/utils';
+import {
+    Building2,
+    Users,
+    Settings,
+    FileText,
+    MessageSquare,
+    Key,
+    Menu,
+    X,
+    LogOut,
+    ChevronDown,
+    Upload,
+} from 'lucide-react';
+
+interface NavItem {
+    label: string;
+    path: string;
+    icon: React.ReactNode;
+}
+
+const NAV_CONFIG: Record<UserRole, NavItem[]> = {
+    SUPER_ADMIN: [
+        { label: 'Tenants', path: '/dashboard/tenants', icon: <Building2 className="w-5 h-5" /> },
+        { label: 'Users & Staff', path: '/dashboard/users', icon: <Users className="w-5 h-5" /> },
+        { label: 'Platform Settings', path: '/dashboard/platform', icon: <Settings className="w-5 h-5" /> },
+        { label: 'Audit Logs', path: '/dashboard/audit', icon: <FileText className="w-5 h-5" /> },
+    ],
+    LAB_ADMIN: [
+        { label: 'My Team', path: '/dashboard/team', icon: <Users className="w-5 h-5" /> },
+        { label: 'SMS Usage', path: '/dashboard/sms', icon: <MessageSquare className="w-5 h-5" /> },
+        { label: 'Developer API', path: '/dashboard/api', icon: <Key className="w-5 h-5" /> },
+        { label: 'Lab Settings', path: '/dashboard/settings', icon: <Settings className="w-5 h-5" /> },
+    ],
+    TECHNICIAN: [
+        { label: 'New Result', path: '/dashboard/upload', icon: <Upload className="w-5 h-5" /> },
+        { label: 'Sent History', path: '/dashboard/history', icon: <FileText className="w-5 h-5" /> },
+    ],
+};
+
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
+    const { user, logout, switchRole } = useAuth();
+    const location = useLocation();
+    const [sidebarOpen, setSidebarOpen] = React.useState(false);
+    const [roleMenuOpen, setRoleMenuOpen] = React.useState(false);
+
+    // Redirect logic handled by router now or within specific pages if needed
+    // Removed specific technician redirect to allow access to dashboard layout
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    const navItems = NAV_CONFIG[user.role] || [];
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            {/* Mobile Header */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b px-4 py-3 flex items-center justify-between">
+                <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg">
+                    <Menu className="w-6 h-6" />
+                </button>
+                <span className="font-semibold">MedLab Dashboard</span>
+                <div className="w-10" />
+            </header>
+
+            {/* Sidebar Overlay (Mobile) */}
+            {sidebarOpen && (
+                <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={() => setSidebarOpen(false)} />
+            )}
+
+            {/* Sidebar */}
+            <aside
+                className={cn(
+                    'fixed top-0 left-0 z-50 h-full w-64 bg-white border-r transform transition-transform duration-200',
+                    'lg:translate-x-0',
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                )}
+            >
+                <div className="p-4 border-b flex items-center justify-between">
+                    <Link to="/dashboard" className="font-bold text-lg text-primary">
+                        MedLab
+                    </Link>
+                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Role Switcher (Dev Only) */}
+                <div className="p-4 border-b">
+                    <div className="relative">
+                        <button
+                            onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                            className="w-full flex items-center justify-between p-2 bg-gray-100 rounded-lg text-sm"
+                        >
+                            <span>
+                                <span className="text-muted-foreground">Role:</span>{' '}
+                                <span className="font-medium">{user.role}</span>
+                            </span>
+                            <ChevronDown className="w-4 h-4" />
+                        </button>
+                        {roleMenuOpen && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg overflow-hidden">
+                                {(['SUPER_ADMIN', 'LAB_ADMIN', 'TECHNICIAN'] as UserRole[]).map((role) => (
+                                    <button
+                                        key={role}
+                                        onClick={() => {
+                                            switchRole(role);
+                                            setRoleMenuOpen(false);
+                                        }}
+                                        className={cn(
+                                            'w-full text-left px-3 py-2 text-sm hover:bg-gray-50',
+                                            user.role === role && 'bg-primary/10 font-medium'
+                                        )}
+                                    >
+                                        {role}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    {user.tenantName && (
+                        <p className="text-xs text-muted-foreground mt-2 truncate">
+                            Tenant: {user.tenantName}
+                        </p>
+                    )}
+                </div>
+
+                {/* Navigation */}
+                <nav className="p-4 space-y-1">
+                    {navItems.map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => setSidebarOpen(false)}
+                            className={cn(
+                                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                                location.pathname === item.path
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:bg-gray-100 hover:text-foreground'
+                            )}
+                        >
+                            {item.icon}
+                            {item.label}
+                        </Link>
+                    ))}
+
+                    {/* Quick Upload Link */}
+                    <Link
+                        to="/"
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-gray-100"
+                    >
+                        <Upload className="w-5 h-5" />
+                        Upload Results
+                    </Link>
+                </nav>
+
+                {/* User Info & Logout */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-white">
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold">
+                            {user.email[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{user.email}</p>
+                            <p className="text-xs text-muted-foreground">{user.role}</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                    </button>
+                </div>
+            </aside>
+
+            {/* Main Content */}
+            <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+                <div className="p-6">{children}</div>
+            </main>
+        </div>
+    );
+}

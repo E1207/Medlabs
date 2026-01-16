@@ -1,0 +1,216 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------
+// ENUMS (Roles & Status)
+// --------------------------------------
+
+enum UserRole {
+  SUPER_ADMIN // Platform Owner
+  LAB_ADMIN // Client Admin
+  TECHNICIAN // Operational Staff
+  VIEWER // Front desk / Read-only
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+enum TenantType {
+  PRIVATE_LAB
+  PUBLIC_HOSPITAL
+  CLINIC
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  NOTIFIED // Email/SMS sent
+  DELIVERED // SMS received on phone
+  OPENED // Patient accessed the doc
+  EXPIRED // Deleted by retention policy
+  FAILED
+}
+
+enum AuditAction {
+  LOGIN
+  LOGIN_FAILED
+  UPLOAD_DOCUMENT
+  VIEW_DOCUMENT
+  DELETE_DOCUMENT
+  UPDATE_SETTINGS
+  EXPORT_DATA
+}
+
+// --------------------------------------
+// MODELS
+// --------------------------------------
+
+model Tenant {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Identity
+  name String
+  slug String @unique // for URLs (e.g., app.medlab.cm/slug)
+
+  // Legal & Admin (Cameroon Context)
+  structureType    TenantType @default(PRIVATE_LAB) @map("structure_type")
+  niu              String? // Numéro Identifiant Unique (Tax)
+  rccm             String? // Registre Commerce
+  accreditationRef String?    @map("accreditation_ref") // Ministère Santé ID
+
+  // Location
+  address String? @db.Text
+  city    String?
+  gpsLat  Float?  @map("gps_lat")
+  gpsLng  Float?  @map("gps_lng")
+
+  // Contacts
+  contactEmail String? @map("contact_email") // Technical
+  billingEmail String? @map("billing_email") // Financial
+  phoneNumber  String? @map("phone_number") // General Lab Phone
+
+  // SMS Configuration
+  smsSenderId String @default("MEDRESULT") @map("sms_sender_id") // Max 11 chars
+  smsBalance  Int    @default(0) @map("sms_balance")
+
+  // Data Retention (Days to keep files)
+  retentionDays Int @default(30) @map("retention_days")
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Relations
+  users     User[]
+  documents Document[]
+  auditLogs AuditLog[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Context
+  tenantId String? @map("tenant_id") // Null only for SUPER_ADMIN
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  // Auth
+  email        String @unique
+  passwordHash String @map("password_hash")
+
+  // Profile
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  role      UserRole @default(VIEWER)
+  lastLoginAt DateTime? @map("last_login_at")
+
+  // Status
+  status          UserStatus @default(INVITED)
+  invitationToken String? @map("invitation_token") // For initial setup
+
+  // Relations
+  uploadedDocs Document[]
+
+  @@index([tenantId])
+  @@map("users")
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Multi-Tenancy
+  tenantId String @map("tenant_id")
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  // Metadata
+  folderRef String @map("folder_ref") // The ID from the SIL (External)
+
+  // File Storage (S3)
+  fileKey  String @map("file_key") // S3 Key/Path
+  mimeType String @default("application/pdf") @map("mime_type")
+  fileSize Int    @map("file_size") // In Bytes
+
+  // Patient Snapshot (Stored here to preserve history even if patient DB changes)
+  patientFirstName String?   @map("patient_first_name")
+  patientLastName  String    @map("patient_last_name")
+  patientEmail     String    @map("patient_email")
+  patientPhone     String    @map("patient_phone") // E.164 Format strictly enforced in code
+  patientDob       DateTime? @map("patient_dob") // Optional, for security challenge
+
+  // Security & Lifecycle
+  accessKey String         @unique @default(uuid()) @map("access_key") // The "Magic Link" token
+  expiresAt DateTime       @map("expires_at") // HDS Retention Policy
+  status    DocumentStatus @default(UPLOADED)
+
+  // Traceability
+  uploadedById String? @map("uploaded_by_id")
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id])
+
+  @@index([tenantId])
+  @@index([folderRef])
+  @@index([accessKey])
+  @@map("documents")
+}
+
+model OtpStore {
+  id             String   @id @default(uuid())
+  tokenSignature String   @map("token_signature") // Hashed or signature part of the JWT to verify against
+  codeHash       String   @map("code_hash")
+  attempts       Int      @default(0)
+  expiresAt      DateTime @map("expires_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([tokenSignature])
+  @@map("otp_store")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Scope
+  tenantId String? @map("tenant_id")
+  tenant   Tenant? @relation(fields: [tenantId], references: [id])
+
+  // Event
+  action      AuditAction
+  description String?
+  resourceId  String?     @map("resource_id") // ID of the document or user affected
+
+  // Actor
+  actorId   String? @map("actor_id") // Can be User ID or "PATIENT"
+  ipAddress String? @map("ip_address")
+  userAgent String? @map("user_agent")
+
+  @@index([tenantId])
+  @@map("audit_logs")
+}
+
+model SystemConfig {
+  key       String   @id
+  value     String   @db.Text
+  isSecret  Boolean  @default(false) @map("is_secret")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
+

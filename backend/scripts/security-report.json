@@ -1,0 +1,38 @@
+{
+  "generatedAt": "2026-01-15T23:27:15.337Z",
+  "summary": {
+    "passed": 4,
+    "failed": 0,
+    "partial": 0
+  },
+  "results": [
+    {
+      "name": "Tenant Isolation - Fake Document ID",
+      "status": "PASS",
+      "expected": "404 Not Found",
+      "actual": "404 Document not found",
+      "severity": "CRITICAL"
+    },
+    {
+      "name": "Tenant Isolation - Token-based Access",
+      "status": "PASS",
+      "expected": "Tokens are document-specific and signed",
+      "actual": "JWT signature prevents forgery; document ID validated",
+      "severity": "CRITICAL"
+    },
+    {
+      "name": "File Upload Bypass - MIME Check",
+      "status": "PASS",
+      "expected": "400 Bad Request (PDF validation)",
+      "actual": "400 - Invalid PDF file: file signature does not match PDF format",
+      "severity": "HIGH"
+    },
+    {
+      "name": "OTP Brute Force - Rate Limiting",
+      "status": "PASS",
+      "expected": "Block after 3-5 attempts",
+      "actual": "Blocked after 4 attempts",
+      "severity": "MEDIUM"
+    }
+  ]
+}
