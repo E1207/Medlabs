@@ -112,12 +112,8 @@ export function UsersList() {
     const handleForceSuspend = async (id: string) => {
         if (!confirm(t('users.toasts.emergency'))) return;
         try {
-            await fetch(`/api/users/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'SUSPENDED' }),
-            });
-            fetchUsers();
+            const res = await api.patch(`/users/${id}`, { status: 'SUSPENDED' });
+            if (res.ok) fetchUsers();
         } catch (err) {
             console.error(err);
         }
@@ -252,7 +248,7 @@ export function UsersList() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Last Name</label>
+                        <label className="block text-sm font-medium mb-1">{t('users.modals.lastName')}</label>
                         <input
                             type="text"
                             className="w-full border rounded-lg px-3 py-2"

@@ -17,7 +17,7 @@ interface Result {
 }
 
 export default function ResultsHistory() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { addToast } = useToast();
     const [results, setResults] = useState<Result[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -49,7 +49,7 @@ export default function ResultsHistory() {
             const { url } = await res.json();
             window.open(url, '_blank');
         } catch (error) {
-            addToast('Failed to get preview link', 'error');
+            addToast(t('errors.preview_failed'), 'error');
         }
     };
 
@@ -89,7 +89,7 @@ export default function ResultsHistory() {
             header: t('history.table.date'),
             render: (row: Result) => (
                 <span className="text-sm text-muted-foreground">
-                    {new Date(row.createdAt).toLocaleDateString('fr-FR', {
+                    {new Date(row.createdAt).toLocaleDateString(i18n.language, {
                         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                     })}
                 </span>
@@ -127,7 +127,7 @@ export default function ResultsHistory() {
                         <>
                             <DropdownMenuItem onClick={() => openFixModal(row)} className="font-bold">
                                 <RefreshCw className="w-4 h-4 mr-2" />
-                                {t('actions.retry')} (Corriger)
+                                {t('actions.retry')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePreview(row.id)}>
                                 <Eye className="w-4 h-4 mr-2" />
@@ -141,7 +141,7 @@ export default function ResultsHistory() {
                         <>
                             <DropdownMenuItem onClick={() => handleResend(row)} className="font-medium">
                                 <Send className="w-4 h-4 mr-2" />
-                                {t('actions.resend')} (Notifier)
+                                {t('actions.resend')}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePreview(row.id)}>
                                 <Eye className="w-4 h-4 mr-2" />
@@ -167,7 +167,7 @@ export default function ResultsHistory() {
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                                 <FileText className="w-4 h-4 mr-2" />
-                                Preuve d'ouverture
+                                {t('results.actions.preview')}
                             </DropdownMenuItem>
                         </>
                     )}

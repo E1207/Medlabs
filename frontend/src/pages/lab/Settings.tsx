@@ -1,8 +1,10 @@
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui-basic';
 import { Tabs, Modal, ProgressBar, useToast } from '@/components/ui-dashboard';
 import { useAuth } from '@/context/AuthContext';
 import { Key, Copy, Trash2, AlertTriangle, Upload } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ApiKey {
     id: string;
@@ -15,6 +17,15 @@ interface ApiKey {
 export function Settings() {
     const { user } = useAuth();
     const { addToast } = useToast();
+    const { t } = useTranslation();
+    const location = useLocation();
+
+    // Determine default tab from URL
+    const getInitialTab = () => {
+        if (location.pathname.includes('/sms')) return 'sms';
+        if (location.pathname.includes('/api')) return 'api';
+        return 'general';
+    };
 
     // General Settings State
     const [labName, setLabName] = React.useState('Laboratoire Mvolyé');
@@ -40,11 +51,11 @@ export function Settings() {
     const saveSettings = async () => {
         // Validation: configuredRetentionDays must be <= maxRetentionDays
         if (configuredRetentionDays > maxRetentionDays) {
-            addToast(`Votre plan actuel ne permet pas de dépasser ${maxRetentionDays} jours. Contactez le support.`, 'error');
+            addToast(t('settings.general.retention.limitError', { days: maxRetentionDays }), 'error');
             return;
         }
         if (configuredRetentionDays < 7) {
-            addToast('La durée minimale est de 7 jours.', 'error');
+            addToast(t('settings.general.retention.minError'), 'error');
             return;
         }
 
@@ -68,7 +79,7 @@ export function Settings() {
                 throw new Error(error.message || 'Failed to update settings');
             }
 
-            addToast('Paramètres enregistrés avec succès', 'success');
+            addToast(t('common.success'), 'success');
         } catch (err: any) {
             console.error(err);
             addToast(err.message, 'error');
@@ -102,274 +113,268 @@ export function Settings() {
                 lastUsed: null,
             },
         ]);
-        addToast('API Key generated successfully', 'success');
+        addToast(t('settings.api.modal.success'), 'success');
     };
 
     const handleRevokeKey = (id: string) => {
         setApiKeys(apiKeys.filter((k) => k.id !== id));
-        addToast('API Key revoked', 'info');
+        addToast(t('settings.api.table.revoked'), 'info');
     };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        addToast('Copied to clipboard', 'success');
+        addToast(t('common.copied'), 'success');
     };
-
-    const tabs = [
-        {
-            id: 'general',
-            label: 'General',
-            content: (
-                <div className="space-y-6 max-w-xl">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Laboratory Name</label>
-                        <input
-                            type="text"
-                            className="w-full border rounded-lg px-3 py-2"
-                            value={labName}
-                            onChange={(e) => setLabName(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Address</label>
-                        <textarea
-                            className="w-full border rounded-lg px-3 py-2"
-                            rows={3}
-                            value={labAddress}
-                            onChange={(e) => setLabAddress(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Lab Logo</label>
-                        <p className="text-xs text-muted-foreground mb-2">
-                            Displayed on patient portal and documents
-                        </p>
-                        <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer">
-                            <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                            <p className="text-sm text-muted-foreground">
-                                Click to upload or drag and drop
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                PNG, JPG up to 2MB
-                            </p>
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1 flex items-center gap-1.5">
-                            SMS Sender ID
-                            <span className="text-muted-foreground" title="To change your Sender ID (e.g., LAB-NAME), please contact Support for telecom validation.">
-                                <Key className="w-3.5 h-3.5" />
-                            </span>
-                        </label>
-                        <div className="relative group">
-                            <input
-                                type="text"
-                                className="w-full border rounded-lg px-3 py-2 bg-gray-50 text-muted-foreground font-mono cursor-not-allowed"
-                                value="MEDLAB"
-                                disabled
-                            />
-                            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
-                                <Key className="w-4 h-4 opacity-50" />
-                            </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1.5 flex items-start gap-1.5 bg-amber-50 border border-amber-100 p-2 rounded-md">
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-                            <span>
-                                Changing this name may require validation by telecom operators in Cameroon.
-                                <strong> Please contact Support</strong> if SMS are blocked.
-                            </span>
-                        </p>
-                    </div>
-
-                    <div className="pt-4 border-t">
-                        <h3 className="font-medium mb-3">Durée de disponibilité des résultats</h3>
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
-                            <Trash2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                            <div className="text-sm text-blue-800">
-                                <p className="font-medium">Politique d'anonymisation automatique</p>
-                                <p>Après ce délai, les dossiers seront anonymisés (les fichiers PDF supprimés, les données patient masquées) tout en préservant les statistiques.</p>
-                            </div>
-                        </div>
-                        <label className="block text-sm font-medium mb-2">Période de rétention</label>
-                        <div className="space-y-3">
-                            <input
-                                type="range"
-                                min={7}
-                                max={maxRetentionDays}
-                                value={configuredRetentionDays}
-                                onChange={(e) => setConfiguredRetentionDays(parseInt(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                            />
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>7 jours</span>
-                                <span className="text-lg font-bold text-blue-600">{configuredRetentionDays} jours</span>
-                                <span>{maxRetentionDays} jours (max)</span>
-                            </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2 bg-amber-50 border border-amber-100 p-2 rounded-md">
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-600 inline mr-1" />
-                            Les patients devront contacter le secrétariat pour obtenir une copie après ce délai.
-                        </p>
-                    </div>
-
-                    <Button onClick={saveSettings}>
-                        Save Changes
-                    </Button>
-                </div>
-            ),
-        },
-        {
-            id: 'api',
-            label: 'API Keys',
-            content: (
-                <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="font-medium">SIL Integration Keys</h3>
-                            <p className="text-sm text-muted-foreground">
-                                Use these keys to integrate with your Laboratory Information System
-                            </p>
-                        </div>
-                        <Button onClick={() => setNewKeyModalOpen(true)} className="gap-2">
-                            <Key className="w-4 h-4" />
-                            Generate New Key
-                        </Button>
-                    </div>
-
-                    <div className="border rounded-lg divide-y">
-                        {apiKeys.map((key) => (
-                            <div key={key.id} className="p-4 flex items-center justify-between">
-                                <div>
-                                    <p className="font-medium">{key.name}</p>
-                                    <p className="text-sm text-muted-foreground font-mono">{key.prefix}</p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Created {key.createdAt} • {key.lastUsed ? `Last used ${key.lastUsed}` : 'Never used'}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => handleRevokeKey(key.id)}
-                                    className="text-red-600 hover:bg-red-50 p-2 rounded-lg"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Generate Key Modal */}
-                    <Modal
-                        open={newKeyModalOpen}
-                        onClose={() => {
-                            setNewKeyModalOpen(false);
-                            setGeneratedKey(null);
-                            setNewKeyName('');
-                        }}
-                        title={generatedKey ? 'Save Your API Key' : 'Generate New API Key'}
-                    >
-                        {generatedKey ? (
-                            <div className="space-y-4">
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                                    <div className="text-sm text-amber-800">
-                                        <p className="font-medium">Save this key now!</p>
-                                        <p>You won't be able to see it again after closing this modal.</p>
-                                    </div>
-                                </div>
-                                <div className="bg-gray-100 rounded-lg p-3 font-mono text-sm break-all flex items-center gap-2">
-                                    <span className="flex-1">{generatedKey}</span>
-                                    <button onClick={() => copyToClipboard(generatedKey)} className="p-1 hover:bg-gray-200 rounded">
-                                        <Copy className="w-4 h-4" />
-                                    </button>
-                                </div>
-                                <Button
-                                    onClick={() => {
-                                        setNewKeyModalOpen(false);
-                                        setGeneratedKey(null);
-                                        setNewKeyName('');
-                                    }}
-                                    className="w-full"
-                                >
-                                    I've Saved My Key
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Key Name</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border rounded-lg px-3 py-2"
-                                        value={newKeyName}
-                                        onChange={(e) => setNewKeyName(e.target.value)}
-                                        placeholder="e.g., SIL Production"
-                                    />
-                                </div>
-                                <Button onClick={handleGenerateKey} className="w-full">
-                                    Generate Key
-                                </Button>
-                            </div>
-                        )}
-                    </Modal>
-                </div>
-            ),
-        },
-        {
-            id: 'sms',
-            label: 'SMS Quota',
-            content: (
-                <div className="space-y-6 max-w-xl">
-                    <div className="bg-white border rounded-lg p-6">
-                        <h3 className="font-medium mb-4">SMS Credits</h3>
-                        <ProgressBar value={smsUsed} max={smsTotal} label="Credits Used" showWarning />
-                        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <p className="text-2xl font-bold">{smsTotal - smsUsed}</p>
-                                <p className="text-sm text-muted-foreground">Remaining</p>
-                            </div>
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <p className="text-2xl font-bold">{smsUsed}</p>
-                                <p className="text-sm text-muted-foreground">Used This Month</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {(smsTotal - smsUsed) < 100 && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <p className="font-medium text-amber-800">Low Balance Warning</p>
-                                <p className="text-sm text-amber-700 mt-1">
-                                    You have less than 100 SMS credits remaining. Contact support to purchase more.
-                                </p>
-                                <Button className="mt-3 bg-amber-600 hover:bg-amber-700">
-                                    Request More Credits
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="text-sm text-muted-foreground">
-                        <p>• 1 SMS = 1 credit (up to 160 characters)</p>
-                        <p>• Credits are shared across all team members</p>
-                        <p>• Contact support@medlab.com to purchase additional credits</p>
-                    </div>
-                </div>
-            ),
-        },
-    ];
 
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold">
-                    {user?.role === 'SUPER_ADMIN' ? 'Global Settings' : 'Lab Settings'}
+                    {user?.role === 'SUPER_ADMIN' ? t('platform.title') : t('settings.title')}
                 </h1>
                 <p className="text-muted-foreground">
-                    Manage your laboratory configuration and integrations
+                    {t('settings.subtitle')}
                 </p>
             </div>
 
-            <Tabs tabs={tabs} defaultTab="general" />
+            <Tabs key={getInitialTab()} tabs={[
+                {
+                    id: 'general',
+                    label: t('settings.tabs.general'),
+                    content: (
+                        <div className="space-y-6 max-w-xl">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">{t('settings.general.name')}</label>
+                                <input
+                                    type="text"
+                                    className="w-full border rounded-lg px-3 py-2"
+                                    value={labName}
+                                    onChange={(e) => setLabName(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">{t('settings.general.address')}</label>
+                                <textarea
+                                    className="w-full border rounded-lg px-3 py-2"
+                                    rows={3}
+                                    value={labAddress}
+                                    onChange={(e) => setLabAddress(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">{t('settings.general.logo')}</label>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                    {t('settings.general.logoDesc')}
+                                </p>
+                                <div className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer">
+                                    <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                                    <p className="text-sm text-muted-foreground">
+                                        {t('upload.dragDrop')}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {t('settings.general.logoHint')}
+                                    </p>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1 flex items-center gap-1.5">
+                                    {t('settings.general.senderId')}
+                                    <span className="text-muted-foreground" title={t('settings.general.senderIdHint')}>
+                                        <Key className="w-3.5 h-3.5" />
+                                    </span>
+                                </label>
+                                <div className="relative group">
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 bg-gray-50 text-muted-foreground font-mono cursor-not-allowed"
+                                        value="MEDLAB"
+                                        disabled
+                                    />
+                                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
+                                        <Key className="w-4 h-4 opacity-50" />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1.5 flex items-start gap-1.5 bg-amber-50 border border-amber-100 p-2 rounded-md">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <span>
+                                        {t('settings.general.senderIdHint')}
+                                    </span>
+                                </p>
+                            </div>
+
+                            <div className="pt-4 border-t">
+                                <h3 className="font-medium mb-3">{t('settings.general.retention.title')}</h3>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+                                    <Trash2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                    <div className="text-sm text-blue-800">
+                                        <p className="font-medium">{t('settings.general.retention.policy')}</p>
+                                        <p>{t('settings.general.retention.policyDesc')}</p>
+                                    </div>
+                                </div>
+                                <label className="block text-sm font-medium mb-2">{t('settings.general.retention.label')}</label>
+                                <div className="space-y-3">
+                                    <input
+                                        type="range"
+                                        min={7}
+                                        max={maxRetentionDays}
+                                        value={configuredRetentionDays}
+                                        onChange={(e) => setConfiguredRetentionDays(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
+                                    <div className="flex justify-between text-xs text-muted-foreground">
+                                        <span>{t('settings.general.retention.min')}</span>
+                                        <span className="text-lg font-bold text-blue-600">{configuredRetentionDays} {t('common.days') || 'jours'}</span>
+                                        <span>{t('settings.general.retention.max', { days: maxRetentionDays })}</span>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2 bg-amber-50 border border-amber-100 p-2 rounded-md">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 inline mr-1" />
+                                    {t('settings.general.retention.hint')}
+                                </p>
+                            </div>
+
+                            <Button onClick={saveSettings}>
+                                {t('common.save')}
+                            </Button>
+                        </div>
+                    ),
+                },
+                {
+                    id: 'api',
+                    label: t('settings.tabs.api'),
+                    content: (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-medium">{t('settings.api.title')}</h3>
+                                    <p className="text-sm text-muted-foreground">
+                                        {t('settings.api.subtitle')}
+                                    </p>
+                                </div>
+                                <Button onClick={() => setNewKeyModalOpen(true)} className="gap-2">
+                                    <Key className="w-4 h-4" />
+                                    {t('settings.api.btn_generate')}
+                                </Button>
+                            </div>
+
+                            <div className="border rounded-lg divide-y">
+                                {apiKeys.map((key) => (
+                                    <div key={key.id} className="p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium">{key.name}</p>
+                                            <p className="text-sm text-muted-foreground font-mono">{key.prefix}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">
+                                                {t('settings.api.table.info', { date: key.createdAt, used: key.lastUsed ? `Last used ${key.lastUsed}` : 'Never used' })}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRevokeKey(key.id)}
+                                            className="text-red-600 hover:bg-red-50 p-2 rounded-lg"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <Modal
+                                open={newKeyModalOpen}
+                                onClose={() => {
+                                    setNewKeyModalOpen(false);
+                                    setGeneratedKey(null);
+                                    setNewKeyName('');
+                                }}
+                                title={generatedKey ? t('settings.api.modal.save') : t('settings.api.modal.create')}
+                            >
+                                {generatedKey ? (
+                                    <div className="space-y-4">
+                                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                                            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                            <div className="text-sm text-amber-800">
+                                                <p className="font-medium">{t('settings.api.modal.save')}</p>
+                                                <p>{t('settings.api.modal.saveDesc')}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-gray-100 rounded-lg p-3 font-mono text-sm break-all flex items-center gap-2">
+                                            <span className="flex-1">{generatedKey}</span>
+                                            <button onClick={() => copyToClipboard(generatedKey)} className="p-1 hover:bg-gray-200 rounded">
+                                                <Copy className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <Button
+                                            onClick={() => {
+                                                setNewKeyModalOpen(false);
+                                                setGeneratedKey(null);
+                                                setNewKeyName('');
+                                            }}
+                                            className="w-full"
+                                        >
+                                            {t('settings.api.modal.btn_confirm')}
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium mb-1">{t('settings.api.modal.name')}</label>
+                                            <input
+                                                type="text"
+                                                className="w-full border rounded-lg px-3 py-2"
+                                                value={newKeyName}
+                                                onChange={(e) => setNewKeyName(e.target.value)}
+                                                placeholder="e.g., SIL Production"
+                                            />
+                                        </div>
+                                        <Button onClick={handleGenerateKey} className="w-full">
+                                            {t('settings.api.btn_generate')}
+                                        </Button>
+                                    </div>
+                                )}
+                            </Modal>
+                        </div>
+                    ),
+                },
+                {
+                    id: 'sms',
+                    label: t('settings.tabs.sms'),
+                    content: (
+                        <div className="space-y-6 max-w-xl">
+                            <div className="bg-white border rounded-lg p-6">
+                                <h3 className="font-medium mb-4">{t('settings.sms.title')}</h3>
+                                <ProgressBar value={smsUsed} max={smsTotal} label={t('settings.sms.used')} showWarning />
+                                <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-2xl font-bold">{smsTotal - smsUsed}</p>
+                                        <p className="text-sm text-muted-foreground">{t('settings.sms.remaining')}</p>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <p className="text-2xl font-bold">{smsUsed}</p>
+                                        <p className="text-sm text-muted-foreground">{t('settings.sms.thisMonth')}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {(smsTotal - smsUsed) < 100 && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-medium text-amber-800">{t('settings.sms.warning')}</p>
+                                        <p className="text-sm text-amber-700 mt-1">
+                                            {t('settings.sms.warningDesc')}
+                                        </p>
+                                        <Button className="mt-3 bg-amber-600 hover:bg-amber-700">
+                                            {t('settings.sms.btn_recharge')}
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="text-sm text-muted-foreground">
+                                <p>{t('settings.sms.hint')}</p>
+                            </div>
+                        </div>
+                    ),
+                },
+            ]} defaultTab={getInitialTab()} />
         </div>
     );
 }

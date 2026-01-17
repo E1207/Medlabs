@@ -15,7 +15,7 @@ interface AuditLog {
 }
 
 export function AuditLogs() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [logs, setLogs] = React.useState<AuditLog[]>([]);
 
     React.useEffect(() => {
@@ -26,7 +26,7 @@ export function AuditLogs() {
         {
             key: 'createdAt',
             header: t('audit.table.date'),
-            render: (row: AuditLog) => new Date(row.createdAt).toLocaleString()
+            render: (row: AuditLog) => new Date(row.createdAt).toLocaleString(i18n.language)
         },
         {
             key: 'action',
@@ -40,7 +40,7 @@ export function AuditLogs() {
         {
             key: 'tenant',
             header: t('audit.table.context'),
-            render: (row: AuditLog) => row.tenant?.name || <div className="text-slate-400 italic">Platform</div>
+            render: (row: AuditLog) => row.tenant?.name || <div className="text-slate-400 italic">{t('audit.table.platform')}</div>
         }
     ];
 

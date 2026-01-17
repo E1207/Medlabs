@@ -16,19 +16,16 @@ i18n
     // init i18next
     // for all options read: https://www.i18next.com/overview/configuration-options
     .init({
-        debug: true,
-        lng: 'fr', // Explicitly set default language to French
-        fallbackLng: 'en',
+        debug: false,
+        fallbackLng: 'fr',
         supportedLngs: ['fr', 'en'],
         interpolation: {
-            escapeValue: false, // not needed for react as it escapes by default
+            escapeValue: false,
         },
         detection: {
-            order: ['querystring', 'cookie', 'localStorage', 'navigator', 'htmlTag', 'path', 'subdomain'],
-            lookupQuerystring: 'lng',
-            lookupCookie: 'i18next',
+            order: ['localStorage', 'navigator', 'cookie', 'htmlTag'],
             lookupLocalStorage: 'i18nextLng',
-            caches: ['localStorage', 'cookie'],
+            caches: ['localStorage'],
         },
         backend: {
             loadPath: '/locales/{{lng}}/translation.json',

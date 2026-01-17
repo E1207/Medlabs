@@ -41,7 +41,6 @@ const NAV_CONFIG: Record<UserRole, NavItem[]> = {
         { label: 'New Result', translationKey: 'nav.upload', path: '/dashboard/upload', icon: <Upload className="w-5 h-5" /> },
         { label: 'Sent History', translationKey: 'nav.history', path: '/dashboard/history', icon: <FileText className="w-5 h-5" /> },
         { label: 'My Team', translationKey: 'nav.team', path: '/dashboard/team', icon: <Users className="w-5 h-5" /> },
-        { label: 'SMS Usage', translationKey: 'nav.sms', path: '/dashboard/sms', icon: <MessageSquare className="w-5 h-5" /> },
         { label: 'Lab Settings', translationKey: 'nav.labSettings', path: '/dashboard/settings', icon: <Settings className="w-5 h-5" /> },
     ],
     TECHNICIAN: [
@@ -73,11 +72,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg">
                     <Menu className="w-6 h-6" />
                 </button>
-                <span className="font-semibold">MedLab Dashboard</span>
+                <span className="font-semibold">{t('platform.title')}</span>
                 <div className="w-10" />
             </header>
-
-
 
             {/* Sidebar Overlay (Mobile) */}
             {sidebarOpen && (
@@ -116,8 +113,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="p-4 border-b space-y-4">
-                    {/* Role Switcher Removed for Production Safety */}
-
                     {/* Language Switcher */}
                     <div className="flex gap-2">
                         <button
@@ -169,7 +164,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{user.email}</p>
-                            <p className="text-xs text-muted-foreground">{user.role}</p>
+                            <p className="text-xs text-muted-foreground">{t(`roles.${user.role}`)}</p>
                         </div>
                     </div>
                     <button

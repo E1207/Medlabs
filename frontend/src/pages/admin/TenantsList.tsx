@@ -54,7 +54,7 @@ export function TenantsList() {
             }
         } catch (error) {
             console.error(error);
-            addToast('Failed to load tenants', 'error');
+            addToast(t('errors.fetch_failed'), 'error');
         }
     };
 
@@ -81,7 +81,7 @@ export function TenantsList() {
                 throw new Error(err.message || 'Failed to create tenant');
             }
 
-            addToast(`Tenant "${formData.name}" created successfully`, 'success');
+            addToast(t('tenants.modals.success_create', { name: formData.name }), 'success');
             setCreateModalOpen(false);
             setFormData({ name: '', slug: '', niu: '', rccm: '', contactEmail: '', initialSmsQuota: 100, adminPassword: '', maxRetentionDays: 30 });
             fetchTenants();
@@ -105,23 +105,23 @@ export function TenantsList() {
             const res = await api.patch(`/tenants/${selectedTenant.id}`, payload);
             if (!res.ok) throw new Error('Failed to update tenant');
 
-            addToast('Tenant updated successfully', 'success');
+            addToast(t('tenants.modals.success_update'), 'success');
             setEditModalOpen(false);
             fetchTenants();
         } catch (error) {
-            addToast('Failed to update tenant', 'error');
+            addToast(t('errors.update_failed'), 'error');
         }
     };
 
     const handleDelete = async (tenantId: string) => {
-        if (!confirm('Are you sure you want to suspend this laboratory? Access will be revoked immediately.')) return;
+        if (!confirm(t('tenants.modals.confirm_suspend'))) return;
         try {
-            const res = await api.delete(`/tenants/${tenantId}`);
+            const res = await api.delete(`/tenant/${tenantId}`);
             if (!res.ok) throw new Error('Failed to suspend tenant');
-            addToast('Tenant suspended successfully', 'success');
+            addToast(t('tenants.modals.success_suspend'), 'success');
             fetchTenants();
         } catch (error) {
-            addToast('Failed to suspend tenant', 'error');
+            addToast(t('errors.failed'), 'error');
         }
     };
 
@@ -153,12 +153,12 @@ export function TenantsList() {
 
         const senderIdRegex = /^[a-zA-Z0-9]{3,11}$/;
         if (!senderIdRegex.test(configData.smsSenderId)) {
-            addToast('Sender ID must be 3-11 alphanumeric characters.', 'error');
+            addToast(t('errors.invalid_sender_id'), 'error');
             return;
         }
 
         // Mock update for now or implement API endpoint for update
-        addToast(`Configuration for ${selectedTenant.name} updated`, 'success');
+        addToast(t('tenants.modals.success_config', { name: selectedTenant.name }), 'success');
         setConfigModalOpen(false);
     };
 
@@ -176,7 +176,7 @@ export function TenantsList() {
             header: t('common.status'),
             render: (row: Tenant) => (
                 <Badge variant={row.isActive ? 'success' : 'danger'}>
-                    {row.isActive ? 'Active' : 'Suspended'}
+                    {row.isActive ? t('common.active') : t('common.suspended')}
                 </Badge>
             ),
         },
@@ -204,13 +204,13 @@ export function TenantsList() {
             header: '',
             render: (row: Tenant) => (
                 <div className="flex gap-2 justify-end">
-                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => openEdit(row)}>
+                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => openEdit(row)} title={t('common.edit')}>
                         <Edit2 className="w-4 h-4 text-slate-500" />
                     </Button>
                     <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => handleOpenConfig(row)}>
                         {t('tenants.modals.configTitle')}
                     </Button>
-                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => handleDelete(row.id)}>
+                    <Button variant="ghost" className="h-8 py-0 px-2" onClick={() => handleDelete(row.id)} title={t('common.delete')}>
                         <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
                 </div>
@@ -256,7 +256,7 @@ export function TenantsList() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Slug</label>
+                        <label className="block text-sm font-medium mb-1">{t('common.slug')}</label>
                         <input
                             type="text"
                             className="w-full border rounded-lg px-3 py-2"
@@ -294,7 +294,7 @@ export function TenantsList() {
                             onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                             placeholder="contact@labo.cm"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">This email will be the initial Admin login.</p>
+                        <p className="text-xs text-muted-foreground mt-1">{t('tenants.modals.emailDesc')}</p>
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">{t('tenants.modals.passwordLabel')} *</label>
@@ -303,7 +303,7 @@ export function TenantsList() {
                             className="w-full border rounded-lg px-3 py-2 font-mono bg-gray-50"
                             value={formData.adminPassword}
                             onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
-                            placeholder="Initial Password"
+                            placeholder={t('tenants.modals.passwordPlaceholder')}
                         />
                     </div>
                     <div>
@@ -326,10 +326,10 @@ export function TenantsList() {
                 </div>
             </Modal>
 
-            <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Tenant">
+            <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title={t('tenants.modals.editTitle')}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">Laboratory Name</label>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.nameLabel')}</label>
                         <input className="w-full border rounded-lg px-3 py-2" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                     </div>
                     <div>
@@ -347,11 +347,11 @@ export function TenantsList() {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium mb-1">Contact Email</label>
+                        <label className="block text-sm font-medium mb-1">{t('tenants.modals.emailLabel')}</label>
                         <input className="w-full border rounded-lg px-3 py-2" value={formData.contactEmail} onChange={e => setFormData({ ...formData, contactEmail: e.target.value })} />
                     </div>
                     <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                        <label className="block text-sm font-medium mb-1 text-amber-800">Plafond de Rétention (selon contrat)</label>
+                        <label className="block text-sm font-medium mb-1 text-amber-800">{t('tenants.modals.retentionLabel')}</label>
                         <div className="flex items-center gap-2">
                             <input
                                 type="number"
@@ -361,13 +361,13 @@ export function TenantsList() {
                                 value={formData.maxRetentionDays}
                                 onChange={e => setFormData({ ...formData, maxRetentionDays: parseInt(e.target.value) || 30 })}
                             />
-                            <span className="text-sm text-amber-700">jours</span>
+                            <span className="text-sm text-amber-700">{t('common.days')}</span>
                         </div>
-                        <p className="text-xs text-amber-600 mt-1">Limite maximale que le Lab Admin peut configurer.</p>
+                        <p className="text-xs text-amber-600 mt-1">{t('tenants.modals.retentionDesc')}</p>
                     </div>
                     <div className="flex gap-3 pt-4">
-                        <Button onClick={() => setEditModalOpen(false)} className="flex-1 bg-gray-200 text-gray-800">Cancel</Button>
-                        <Button onClick={handleEdit} className="flex-1">Save Changes</Button>
+                        <Button onClick={() => setEditModalOpen(false)} className="flex-1 bg-gray-200 text-gray-800">{t('common.cancel')}</Button>
+                        <Button onClick={handleEdit} className="flex-1">{t('common.save')}</Button>
                     </div>
                 </div>
             </Modal>
@@ -397,16 +397,16 @@ export function TenantsList() {
                             onChange={(e) => setConfigData({ ...configData, smsTopup: parseInt(e.target.value) || 0 })}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                            Current Balance: {selectedTenant?.smsBalance} credits
+                            {t('tenants.modals.currentBalance')}: {selectedTenant?.smsBalance} {t('tenants.table.credits')}
                         </p>
                     </div>
 
                     <div className="flex gap-3 pt-4">
                         <Button onClick={() => setConfigModalOpen(false)} className="flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300">
-                            Cancel
+                            {t('common.cancel')}
                         </Button>
                         <Button onClick={handleSaveConfig} className="flex-1">
-                            Save Changes
+                            {t('common.save')}
                         </Button>
                     </div>
                 </div>

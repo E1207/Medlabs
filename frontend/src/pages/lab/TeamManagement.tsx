@@ -1,6 +1,7 @@
 
 import * as React from 'react';
-import { Plus, Search, MoreHorizontal, Mail, Shield, User, Ban, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Plus, Search, Mail, Ban, CheckCircle } from 'lucide-react';
 import { DataTable, Badge, Modal } from '../../components/ui-dashboard';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,6 +16,7 @@ interface TeamMember {
 }
 
 export function TeamManagement() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [members, setMembers] = React.useState<TeamMember[]>([]);
     const [loading, setLoading] = React.useState(true);
@@ -66,7 +68,7 @@ export function TeamManagement() {
     };
 
     const handleStatusChange = async (id: string, newStatus: 'ACTIVE' | 'SUSPENDED') => {
-        if (!confirm('Are you sure you want to change the status of this user?')) return;
+        if (!confirm(t('team.confirmStatus'))) return;
         try {
             await fetch(`/api/users/${id}`, {
                 method: 'PATCH',
@@ -80,10 +82,10 @@ export function TeamManagement() {
     };
 
     const handleResetPassword = async (id: string) => {
-        if (!confirm('Send password reset email to this user?')) return;
+        if (!confirm(t('team.confirmResetTooltip'))) return;
         try {
             await fetch(`/api/users/${id}/reset-password`, { method: 'POST' });
-            alert('Reset link sent!');
+            alert(t('team.resetSent'));
         } catch (err) {
             console.error(err);
         }
@@ -91,12 +93,12 @@ export function TeamManagement() {
 
     const columns = [
         {
-            header: 'Name',
+            header: t('team.table.name'),
             key: 'firstName',
             render: (row: TeamMember) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-medium">
-                        {row.firstName[0]}{row.lastName[0]}
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-medium uppercase">
+                        {row.firstName?.[0]}{row.lastName?.[0]}
                     </div>
                     <div>
                         <div className="font-medium text-slate-900">{row.firstName} {row.lastName}</div>
@@ -106,7 +108,7 @@ export function TeamManagement() {
             )
         },
         {
-            header: 'Role',
+            header: t('team.table.role'),
             key: 'role',
             render: (row: TeamMember) => {
                 const colors = {
@@ -114,11 +116,11 @@ export function TeamManagement() {
                     TECHNICIAN: 'bg-blue-100 text-blue-700',
                     VIEWER: 'bg-gray-100 text-gray-700'
                 };
-                return <Badge className={colors[row.role] || ''}>{row.role}</Badge>;
+                return <Badge className={colors[row.role] || ''}>{t(`roles.${row.role}`)}</Badge>;
             }
         },
         {
-            header: 'Status',
+            header: t('team.table.status'),
             key: 'status',
             render: (row: TeamMember) => {
                 const variants: any = {
@@ -126,18 +128,18 @@ export function TeamManagement() {
                     INVITED: 'warning',
                     SUSPENDED: 'danger'
                 };
-                return <Badge variant={variants[row.status]}>{row.status}</Badge>;
+                return <Badge variant={variants[row.status]}>{t(`status.${row.status.toLowerCase()}`)}</Badge>;
             }
         },
         {
-            header: 'Actions',
+            header: t('team.table.actions'),
             key: 'actions',
             render: (row: TeamMember) => (
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => handleResetPassword(row.id)}
                         className="p-1 hover:bg-slate-100 rounded text-slate-500"
-                        title="Reset Password"
+                        title={t('team.confirmResetTooltip')}
                     >
                         <Mail className="w-4 h-4" />
                     </button>
@@ -146,7 +148,7 @@ export function TeamManagement() {
                             <button
                                 onClick={() => handleStatusChange(row.id, 'ACTIVE')}
                                 className="p-1 hover:bg-green-50 text-green-600 rounded"
-                                title="Activate"
+                                title={t('common.activate')}
                             >
                                 <CheckCircle className="w-4 h-4" />
                             </button>
@@ -154,7 +156,7 @@ export function TeamManagement() {
                             <button
                                 onClick={() => handleStatusChange(row.id, 'SUSPENDED')}
                                 className="p-1 hover:bg-red-50 text-red-600 rounded"
-                                title="Suspend"
+                                title={t('common.suspend')}
                             >
                                 <Ban className="w-4 h-4" />
                             </button>
@@ -169,15 +171,15 @@ export function TeamManagement() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Team Management</h1>
-                    <p className="text-slate-500">Manage access for your laboratory staff.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">{t('team.title')}</h1>
+                    <p className="text-slate-500">{t('team.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setShowInviteModal(true)}
                     className="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-primary/90"
                 >
                     <Plus className="w-4 h-4" />
-                    Add Member
+                    {t('team.addMember')}
                 </button>
             </div>
 
@@ -187,7 +189,7 @@ export function TeamManagement() {
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Search by name or email..."
+                            placeholder={t('team.searchPlaceholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -203,12 +205,12 @@ export function TeamManagement() {
             <Modal
                 open={showInviteModal}
                 onClose={() => setShowInviteModal(false)}
-                title="Invite New Member"
+                title={t('team.modal.title')}
             >
                 <form onSubmit={handleInvite} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">First Name</label>
+                            <label className="text-sm font-medium">{t('team.modal.firstName')}</label>
                             <input
                                 required
                                 className="w-full border rounded-lg px-3 py-2"
@@ -217,7 +219,7 @@ export function TeamManagement() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Last Name</label>
+                            <label className="text-sm font-medium">{t('team.modal.lastName')}</label>
                             <input
                                 required
                                 className="w-full border rounded-lg px-3 py-2"
@@ -227,7 +229,7 @@ export function TeamManagement() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Email Address</label>
+                        <label className="text-sm font-medium">{t('team.modal.email')}</label>
                         <input
                             type="email"
                             required
@@ -237,14 +239,14 @@ export function TeamManagement() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Role</label>
+                        <label className="text-sm font-medium">{t('team.modal.role')}</label>
                         <select
                             className="w-full border rounded-lg px-3 py-2"
                             value={inviteForm.role}
                             onChange={e => setInviteForm({ ...inviteForm, role: e.target.value as any })}
                         >
-                            <option value="TECHNICIAN">Technician (Can upload results)</option>
-                            <option value="VIEWER">Viewer (Read-only)</option>
+                            <option value="TECHNICIAN">{t('team.modal.roles.technician')}</option>
+                            <option value="VIEWER">{t('team.modal.roles.viewer')}</option>
                         </select>
                     </div>
                     <div className="pt-2 flex justify-end gap-3">
@@ -253,13 +255,13 @@ export function TeamManagement() {
                             onClick={() => setShowInviteModal(false)}
                             className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
                         >
-                            Cancel
+                            {t('team.modal.cancel')}
                         </button>
                         <button
                             type="submit"
                             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90"
                         >
-                            Send Invitation
+                            {t('team.modal.submit')}
                         </button>
                     </div>
                 </form>

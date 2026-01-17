@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui-basic';
 import { OtpInput } from '@/components/OtpInput';
 import { Shield, Loader2, CheckCircle, AlertTriangle, Download, FileText } from 'lucide-react';
@@ -14,6 +15,7 @@ interface ErrorInfo {
 }
 
 export function GuestAccess() {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
 
@@ -34,12 +36,12 @@ export function GuestAccess() {
     // Initial token check
     React.useEffect(() => {
         if (!token) {
-            setError({ title: 'Invalid Link', message: 'No access token provided. Please use the link from your SMS or email.' });
+            setError({ title: t('guest.error.title'), message: t('guest.error.invalidLink') });
             setState('error');
             return;
         }
         setState('challenge');
-    }, [token]);
+    }, [token, t]);
 
     // Timer Logic
     React.useEffect(() => {
@@ -67,8 +69,8 @@ export function GuestAccess() {
                 const data = await res.json().catch(() => ({}));
                 if (data.isAnonymized) {
                     setError({
-                        title: 'Dossier Archivé',
-                        message: 'Ce résultat a été archivé pour des raisons de sécurité. Veuillez contacter le laboratoire pour obtenir une copie.'
+                        title: t('guest.error.archived'),
+                        message: t('guest.error.archivedDesc')
                     });
                     setState('error');
                     return;
@@ -78,7 +80,7 @@ export function GuestAccess() {
             }
 
             if (res.status === 401) {
-                setError({ title: 'Lien Expiré', message: 'Ce lien a expiré. Veuillez contacter le laboratoire pour obtenir un nouveau lien.' });
+                setError({ title: t('guest.error.expired'), message: t('guest.error.archivedDesc') }); // Use similar logic for expired
                 setState('error');
                 return;
             }
@@ -91,7 +93,7 @@ export function GuestAccess() {
             setMaskedPhone(data.message?.match(/\+\d+\*+\d+/)?.[0] || '***');
             setState('otp');
         } catch {
-            setError({ title: 'Erreur de Connexion', message: 'Impossible de se connecter au serveur. Veuillez réessayer.' });
+            setError({ title: t('guest.error.title'), message: t('errors.failed') });
             setState('error');
         } finally {
             setIsLoading(false);
@@ -110,7 +112,7 @@ export function GuestAccess() {
             });
 
             if (res.status === 401) {
-                setError({ title: 'Invalid Code', message: 'The code you entered is incorrect or has expired. Please try again.' });
+                setError({ title: t('guest.error.verifyFailed'), message: t('guest.error.verifyFailed') });
                 setOtp('');
                 return;
             }
@@ -123,7 +125,7 @@ export function GuestAccess() {
             setDownloadUrl(data.downloadUrl);
             setState('success');
         } catch {
-            setError({ title: 'Verification Failed', message: 'Unable to verify your code. Please try again.' });
+            setError({ title: t('guest.error.verifyFailed'), message: t('errors.failed') });
         } finally {
             setIsLoading(false);
         }
@@ -146,13 +148,8 @@ export function GuestAccess() {
             }
 
             if (res.status === 403) {
-                setError({ title: 'Verification Failed', message: 'Incorrect Date of Birth or Too Many Attempts.' });
+                setError({ title: t('guest.error.verifyFailed'), message: t('guest.error.verifyFailed') });
                 setDob('');
-                // Stay on error page or let user retry? Ideally show error toast but here we use simple error state
-                // Requirement says "Block after 5 failed attempts". 403 handles both.
-                // Resetting to error state might be harsh if just incorrect DOB.
-                // Let's revert to 'error' state for simplicity or show inline error?
-                // For now, consistent with other errors:
                 setState('error');
                 return;
             }
@@ -166,7 +163,7 @@ export function GuestAccess() {
             setDownloadUrl(data.downloadUrl);
             setState('success');
         } catch (err: any) {
-            setError({ title: 'Fallback Failed', message: err.message || 'Unable to verify identity.' });
+            setError({ title: t('guest.error.title'), message: err.message || t('errors.failed') });
             setState('error');
         } finally {
             setIsLoading(false);
@@ -193,7 +190,7 @@ export function GuestAccess() {
                     <CardContent>
                         <p className="text-center text-muted-foreground mb-6">{error.message}</p>
                         <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
-                            Try Again
+                            {t('guest.error.tryAgain')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -207,11 +204,11 @@ export function GuestAccess() {
                 <Card className="w-full max-w-md">
                     <CardHeader className="text-center">
                         <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
-                        <CardTitle className="text-2xl">Secure Medical Results</CardTitle>
+                        <CardTitle className="text-2xl">{t('guest.challenge.title')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <p className="text-center text-muted-foreground text-lg">
-                            To access your document, please confirm your identity.
+                            {t('guest.challenge.subtitle')}
                         </p>
                         <Button
                             onClick={handleChallenge}
@@ -223,7 +220,7 @@ export function GuestAccess() {
                             ) : (
                                 <Shield className="w-5 h-5 mr-2" />
                             )}
-                            Send Security Code
+                            {t('guest.challenge.submit')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -237,11 +234,11 @@ export function GuestAccess() {
                 <Card className="w-full max-w-md">
                     <CardHeader className="text-center">
                         <FileText className="w-16 h-16 text-primary mx-auto mb-4" />
-                        <CardTitle className="text-xl">Enter Verification Code</CardTitle>
+                        <CardTitle className="text-xl">{t('guest.otp.title')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <p className="text-center text-muted-foreground">
-                            Code sent to <span className="font-semibold">{maskedPhone}</span>
+                            {t('guest.otp.sentTo')} <span className="font-semibold">{maskedPhone}</span>
                         </p>
 
                         <OtpInput value={otp} onChange={setOtp} disabled={isLoading} />
@@ -260,20 +257,20 @@ export function GuestAccess() {
                             ) : (
                                 <CheckCircle className="w-5 h-5 mr-2" />
                             )}
-                            Verify & View
+                            {t('guest.otp.submit')}
                         </Button>
 
                         <div className="text-center space-y-3 pt-2">
                             <p className="text-sm text-muted-foreground">
                                 {resendTimer > 0 ? (
-                                    <span>Resend SMS in {resendTimer}s</span>
+                                    <span>{t('guest.otp.resendIn', { seconds: resendTimer })}</span>
                                 ) : (
                                     <button
                                         onClick={handleChallenge}
                                         className="text-primary hover:underline font-medium"
                                         disabled={isLoading}
                                     >
-                                        Resend SMS Code
+                                        {t('guest.otp.resendNow')}
                                     </button>
                                 )}
                             </p>
@@ -283,7 +280,7 @@ export function GuestAccess() {
                                     onClick={() => setState('dob')}
                                     className="text-sm text-muted-foreground hover:text-gray-900 underline"
                                 >
-                                    I'm having trouble receiving SMS
+                                    {t('guest.otp.trouble')}
                                 </button>
                             )}
                         </div>
@@ -299,11 +296,11 @@ export function GuestAccess() {
                 <Card className="w-full max-w-md">
                     <CardHeader className="text-center">
                         <Shield className="w-16 h-16 text-primary mx-auto mb-4" />
-                        <CardTitle className="text-xl">Security Question</CardTitle>
+                        <CardTitle className="text-xl">{t('guest.dob.title')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <p className="text-center text-muted-foreground">
-                            Please confirm your Date of Birth to access the document.
+                            {t('guest.dob.subtitle')}
                         </p>
 
                         <div className="space-y-2">
@@ -326,14 +323,14 @@ export function GuestAccess() {
                             ) : (
                                 <CheckCircle className="w-5 h-5 mr-2" />
                             )}
-                            Verify Identity
+                            {t('guest.dob.submit')}
                         </Button>
 
                         <button
                             onClick={() => setState('otp')}
                             className="w-full text-sm text-muted-foreground hover:text-gray-900"
                         >
-                            Back to SMS Verification
+                            {t('guest.dob.back')}
                         </button>
                     </CardContent>
                 </Card>
@@ -347,7 +344,7 @@ export function GuestAccess() {
                 <header className="p-4 border-b text-center">
                     <h1 className="text-xl font-semibold flex items-center justify-center gap-2">
                         <CheckCircle className="w-6 h-6 text-green-500" />
-                        Your Medical Results
+                        {t('guest.success.title')}
                     </h1>
                 </header>
 
@@ -357,7 +354,7 @@ export function GuestAccess() {
                             <CardContent className="pt-6 space-y-4">
                                 <FileText className="w-20 h-20 text-primary mx-auto" />
                                 <p className="text-center text-muted-foreground">
-                                    Your document is ready. Tap below to download.
+                                    {t('guest.success.ready')}
                                 </p>
                                 <a
                                     href={downloadUrl}
@@ -367,7 +364,7 @@ export function GuestAccess() {
                                 >
                                     <Button className="w-full h-14 text-lg font-semibold">
                                         <Download className="w-5 h-5 mr-2" />
-                                        Download PDF
+                                        {t('guest.success.download')}
                                     </Button>
                                 </a>
                             </CardContent>
@@ -378,7 +375,7 @@ export function GuestAccess() {
                         <iframe
                             src={downloadUrl}
                             className="w-full h-full min-h-[600px] rounded-lg border"
-                            title="Medical Results PDF"
+                            title={t('guest.success.title')}
                         />
                     </div>
                 )}

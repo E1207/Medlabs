@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { UploadCloud, FileCheck, AlertTriangle, Loader2, X } from 'lucide-react';
+import { UploadCloud, FileCheck, AlertTriangle, Loader2, X, Sparkles } from 'lucide-react';
 import { Button, Input, Label, Card, CardHeader, CardTitle, CardContent } from './ui-basic';
 import { useTranslation } from 'react-i18next';
 import * as pdfjsLib from 'pdfjs-dist';
+import { extractPdfData, ExtractedData } from '@/lib/pdf-extractor';
 
 // Worker configuration
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
@@ -25,6 +26,7 @@ export function SmartUploadForm() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [autoExtracted, setAutoExtracted] = useState<ExtractedData | null>(null);
 
     const [form, setForm] = useState<FormData>({
         folderRef: '',
@@ -47,26 +49,37 @@ export function SmartUploadForm() {
 
     const parsePdf = async (file: File) => {
         setParsing(true);
+        setAutoExtracted(null);
+
         try {
+            // Use the new PDF extractor for OCR
+            const extracted = await extractPdfData(file);
+
+            if (extracted.confidence !== 'none') {
+                setAutoExtracted(extracted);
+
+                // Auto-fill form with extracted data
+                setForm(prev => ({
+                    ...prev,
+                    firstName: extracted.patientFirstName || prev.firstName,
+                    lastName: extracted.patientLastName || prev.lastName,
+                    phone: extracted.patientPhone || prev.phone,
+                    folderRef: extracted.folderRef || prev.folderRef,
+                }));
+            }
+
+            // Also try to extract DOB using the original method
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-            // Extract text from page 1
             const page = await pdf.getPage(1);
             const textContent = await page.getTextContent();
             const text = textContent.items.map((item: any) => item.str).join(' ');
 
-            console.log('Parsed Text:', text);
-
-            // Regex Matchers
-            // Strategy: Prioritize context-based matching to avoid "Print Date" false positives.
-            // 1. Look for "Né le", "Né(e) le", "Date de naissance", "DDN"
+            // DOB patterns
             const bornDatePatterns = [
-                /N[ée](?:e)?\s+(?:le)?\s*[:.]?\s*(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})/i,
-                /Date\s+de\s+naissance\s*[:.]?\s*(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})/i,
-                /D\.?D\.?N\.?\s*[:.]?\s*(\d{2}[\/\-.]\d{2}[\/\-.]\d{4})/i,
-                // Fallback: Look for date widely separated from "Today" or specific keywords if needed. 
-                // For now, we strictly avoid bare date matching to satisfy the "False Positive" requirement.
+                /N[ée](?:e)?\s+(?:le)?\s*[:.]?\s*(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{4})/i,
+                /Date\s+de\s+naissance\s*[:.]?\s*(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{4})/i,
+                /D\.?D\.?N\.?\s*[:.]?\s*(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{4})/i,
             ];
 
             let foundDob = '';
@@ -78,13 +91,15 @@ export function SmartUploadForm() {
                 }
             }
 
-            setForm(prev => ({
-                ...prev,
-                dob: foundDob || prev.dob,
-            }));
+            if (foundDob) {
+                setForm(prev => ({
+                    ...prev,
+                    dob: foundDob,
+                }));
+            }
 
         } catch (err) {
-            console.error(err);
+            console.error('[SmartUploadForm] Parse error:', err);
             setError(t('errors.parsing'));
         } finally {
             setParsing(false);
@@ -199,6 +214,7 @@ export function SmartUploadForm() {
     const removeFile = () => {
         setFile(null);
         setSuccess(false);
+        setAutoExtracted(null);
     };
 
     return (
@@ -255,6 +271,25 @@ export function SmartUploadForm() {
                         <button onClick={removeFile} className="text-gray-400 hover:text-red-500 p-1">
                             <X className="w-5 h-5" />
                         </button>
+                    </div>
+                )}
+
+                {/* OCR Auto-extraction Badge */}
+                {autoExtracted && autoExtracted.confidence !== 'none' && (
+                    <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-purple-500" />
+                        <div className="flex-1">
+                            <span className="text-sm font-medium text-purple-700">
+                                ✨ {t('upload.ocr.extracted')}
+                            </span>
+                            <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${autoExtracted.confidence === 'high' ? 'bg-green-100 text-green-700' :
+                                autoExtracted.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                    'bg-gray-100 text-gray-600'
+                                }`}>
+                                {autoExtracted.confidence === 'high' ? t('upload.ocr.high') :
+                                    autoExtracted.confidence === 'medium' ? t('upload.ocr.medium') : t('upload.ocr.low')}
+                            </span>
+                        </div>
                     </div>
                 )}
 

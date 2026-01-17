@@ -1,13 +1,18 @@
 {
+    "roles": {
+        "SUPER_ADMIN": "Administrateur Plateforme",
+        "LAB_ADMIN": "Administrateur Laboratoire",
+        "TECHNICIAN": "Technicien"
+    },
     "nav": {
-        "tenants": "Clients (Tenants)",
-        "users": "Utilisateurs & Staff",
-        "directory": "Annuaire Utilisateurs",
+        "tenants": "Laboratoires Partenaires",
+        "users": "Utilisateurs & Personnel",
+        "directory": "Annuaire",
         "platform": "Paramètres Plateforme",
         "audit": "Journaux d'Audit",
         "team": "Mon Équipe",
-        "sms": "Conso SMS",
-        "api": "API Développeur",
+        "sms": "Consommation SMS",
+        "api": "Interface API",
         "labSettings": "Paramètres Labo",
         "upload": "Nouveau Résultat",
         "history": "Historique des Envois",
@@ -15,20 +20,42 @@
         "quickUpload": "Envoyer Résultats",
         "signOut": "Se Déconnecter",
         "role": "Rôle",
-        "tenant": "Organisation"
+        "tenant": "Laboratoire"
     },
     "auth": {
         "signInTitle": "Connexion Partenaire",
         "signInSubtitle": "Accédez à votre espace sécurisé",
-        "emailLabel": "Adresse Email",
-        "passwordLabel": "Mot de passe",
+        "login": "Connexion",
+        "email": "Adresse Email",
+        "password": "Mot de passe",
         "forgotPassword": "Mot de passe oublié ?",
-        "signInButton": "Se Connecter",
-        "signingIn": "Connexion...",
-        "impersonationBanner": "Vous incarnez",
+        "signIn": "Se connecter",
+        "errors": {
+            "invalid": "Email ou mot de passe incorrect",
+            "required": "Ce champ est obligatoire"
+        },
+        "forgot": {
+            "title": "Réinitialiser le mot de passe",
+            "subtitle": "Entrez votre email pour recevoir les instructions de récupération.",
+            "submit": "Envoyer le lien",
+            "successTitle": "Vérifiez vos emails",
+            "successDesc": "Si un compte existe pour {{email}}, vous recevrez un lien de réinitialisation sous peu.",
+            "backToLogin": "Retour à la connexion"
+        },
+        "reset": {
+            "title": "Nouveau mot de passe",
+            "subtitle": "Choisissez un mot de passe robuste pour protéger votre compte.",
+            "label": "Nouveau mot de passe",
+            "confirmLabel": "Confirmer le mot de passe",
+            "submit": "Mettre à jour",
+            "successTitle": "Mot de passe mis à jour",
+            "successDesc": "Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.",
+            "errorMismatch": "Les mots de passe ne correspondent pas"
+        },
+        "impersonationBanner": "Vous agissez en tant que",
         "switchBack": "Revenir à mon compte",
         "notPartner": "Pas encore partenaire ?",
-        "contactSales": "Contacter les ventes"
+        "contactSales": "Contacter le service commercial"
     },
     "common": {
         "cancel": "Annuler",
@@ -36,11 +63,37 @@
         "create": "Créer",
         "delete": "Supprimer",
         "edit": "Modifier",
+        "slug": "Identifiant unique (Slug)",
+        "name": "Nom de l'organisation",
+        "email": "Email de contact",
+        "phone": "Téléphone",
+        "address": "Adresse physique",
+        "retention": "Rétention (jours)",
+        "active": "Actif",
+        "inactive": "Inactif",
         "status": "Statut",
         "actions": "Actions",
         "warning": "Attention",
         "success": "Succès",
-        "error": "Erreur"
+        "error": "Erreur",
+        "loading": "Chargement...",
+        "search": "Rechercher",
+        "noData": "Aucune donnée disponible",
+        "reconnect": "Veuillez vous reconnecter",
+        "copied": "Copié dans le presse-papiers",
+        "activate": "Activer",
+        "suspend": "Suspendre",
+        "suspended": "Suspendu",
+        "days": "jours",
+        "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet élément ?"
+    },
+    "errors": {
+        "failed": "L'opération a échoué",
+        "required": "Ce champ est obligatoire",
+        "fetch_failed": "Échec de la récupération des données",
+        "preview_failed": "Échec de la génération du lien de prévisualisation",
+        "update_failed": "Échec de la mise à jour",
+        "invalid_sender_id": "Sender ID invalide (3-11 caractères alphanumériques)"
     },
     "status": {
         "UPLOADED": "Importé",
@@ -50,134 +103,41 @@
         "FAILED": "Échec",
         "UNKNOWN": "Inconnu",
         "ACTIVE": "Actif",
-        "SUSPENDED": "Suspendu"
-    },
-    "actions": {
-        "preview": "Voir le document",
-        "retry": "Réessayer",
-        "resend": "Renvoyer",
-        "edit": "Modifier",
-        "suspend": "Suspendre",
-        "cancel": "Annuler",
-        "create": "Créer",
-        "save": "Enregistrer"
-    },
-    "errors": {
-        "fetch_failed": "Échec du chargement des données. Veuillez réessayer.",
-        "failed": "Une erreur est survenue.",
-        "parsing": "Erreur de traitement du fichier.",
-        "invalid_phone": "Numéro de téléphone invalide."
-    },
-    "tenants": {
-        "title": "Gestion des Clients",
-        "subtitle": "Gérez tous les laboratoires enregistrés",
-        "createButton": "Créer un Tenant",
-        "stats": {
-            "total": "Total Clients",
-            "active": "Clients Actifs",
-            "sms": "Total Crédits SMS"
-        },
-        "table": {
-            "name": "Nom du Laboratoire",
-            "senderId": "Sender ID",
-            "balance": "Solde SMS",
-            "users": "Utilisateurs",
-            "credits": "crédits"
-        },
-        "modals": {
-            "createTitle": "Nouveau Laboratoire",
-            "editTitle": "Modifier Laboratoire",
-            "configTitle": "Configuration",
-            "nameLabel": "Nom du Laboratoire",
-            "slugLabel": "Slug (URL)",
-            "niuLabel": "NIU (Impôts)",
-            "rccmLabel": "RCCM",
-            "emailLabel": "Email Contact",
-            "passwordLabel": "Mot de passe Admin",
-            "quotaLabel": "Quota SMS Initial",
-            "senderIdLabel": "SMS Sender ID",
-            "creditsLabel": "Ajouter Crédits SMS",
-            "senderIdWarning": "Ne modifiez ceci qu'après validation du Sender ID par l'opérateur."
-        }
-    },
-    "platform": {
-        "title": "Paramètres Plateforme",
-        "subtitle": "Configuration globale SMS et Email",
-        "tabs": {
-            "general": "Général",
-            "sms": "Passerelles SMS",
-            "smtp": "SMTP (Email)",
-            "retention": "Rétention des Données"
-        },
-        "general": {
-            "maintenance": "Mode Maintenance",
-            "maintenanceDesc": "Désactiver l'accès pour les non-admins.",
-            "maintenanceWarn": "Ceci bloquera la connexion pour tous les techniciens et patients.",
-            "announcement": "Annonce Globale",
-            "announcementDesc": "Ce message sera affiché sur la page de connexion."
-        },
-        "sms": {
-            "sensitive": "Configuration Sensible",
-            "sensitiveDesc": "Les identifiants sont chiffrés. Les changements sont immédiats.",
-            "provider": "Fournisseur SMS",
-            "apiKey": "Clé API",
-            "apiSecret": "Secret API",
-            "baseUrl": "URL de base",
-            "testButton": "Tester Connexion"
-        },
-        "retention": {
-            "compliance": "Conformité HDS / RGPD",
-            "complianceDesc": "Configuration de la suppression automatique des documents médicaux.",
-            "default": "Rétention par défaut (Jours)",
-            "defaultDesc": "Durée par défaut pour les nouveaux labos.",
-            "max": "Rétention Maximale (Jours)",
-            "maxDesc": "Les labos ne peuvent pas dépasser cette valeur."
-        }
-    },
-    "audit": {
-        "title": "Journaux d'Audit",
-        "subtitle": "Traçabilité des actions sensibles sur la plateforme.",
-        "table": {
-            "date": "Date",
-            "action": "Action",
-            "description": "Description",
-            "context": "Contexte"
-        }
+        "active": "Actif",
+        "INVITED": "Invité",
+        "invited": "Invité",
+        "SUSPENDED": "Suspendu",
+        "suspended": "Suspendu"
     },
     "dashboard": {
-        "title": "Tableau de Bord MedLab",
-        "welcome": "Bon retour"
-    },
-    "users": {
-        "title": "Annuaire Utilisateurs",
-        "subtitle": "Gérez tous les utilisateurs de la plateforme.",
-        "createButton": "Créer un Utilisateur",
-        "searchPlaceholder": "Rechercher par nom, email ou Labo...",
-        "allRoles": "Tous les Rôles",
-        "table": {
-            "user": "Utilisateur",
-            "role": "Rôle",
-            "organization": "Organisation",
-            "status": "Statut"
+        "title": "Tableau de Bord",
+        "subtitle": "Vue d'ensemble de l'activité du laboratoire",
+        "kpis": {
+            "dailyVolume": "Volume du jour",
+            "deliverability": "Taux de délivrabilité",
+            "openRate": "Taux d'ouverture",
+            "smsBalance": "Crédits SMS",
+            "vsYesterday": "par rapport à hier",
+            "monthlyAverage": "Moyenne sur 30 jours",
+            "recharge": "Recharger / Détails"
         },
-        "impersonateConfirm": "Vous êtes sur le point de vous connecter en tant que cet utilisateur. Vous verrez exactement ce qu'il voit. Agissez avec prudence."
+        "charts": {
+            "performance": "Performance de délivrabilité (7 derniers jours)",
+            "distribution": "Distribution des statuts"
+        },
+        "liveFeed": {
+            "title": "Derniers échecs (Action requise)",
+            "empty": "Aucun échec récent à signaler. Tout fonctionne parfaitement.",
+            "patient": "Patient",
+            "phone": "Téléphone",
+            "date": "Date",
+            "action": "Action",
+            "fix": "Corriger"
+        }
     },
-    "upload": {
-        "title": "Nouveau Résultat",
-        "dragDrop": "Glissez-déposez le PDF ici",
-        "browse": "ou cliquez pour parcourir",
-        "folderRef": "Référence Dossier",
-        "dob": "Date de Naissance",
-        "firstName": "Prénom",
-        "lastName": "Nom",
-        "email": "Email (Optionnel)",
-        "phone": "Téléphone Mobile",
-        "btn_send": "Envoyer Résultat",
-        "btn_uploading": "Envoi en cours..."
-    },
-    "history": {
+    "results": {
         "title": "Historique des Envois",
-        "subtitle": "Suivi des résultats envoyés aux patients.",
+        "subtitle": "Suivi des résultats envoyés aux patients",
         "searchPlaceholder": "Rechercher par nom, réf...",
         "table": {
             "date": "Date",
@@ -186,13 +146,307 @@
             "status": "Statut",
             "actions": "Actions"
         },
+        "actions": {
+            "preview": "Voir le document",
+            "resend": "Renvoyer SMS",
+            "retry": "Réessayer",
+            "delete": "Supprimer",
+            "cancel": "Annuler l'envoi"
+        },
         "modals": {
             "resendTitle": "Renvoyer la Notification",
             "retryTitle": "Réessayer l'Envoi",
-            "confirmText": "Voulez-vous renvoyer le lien sécurisé au patient ? Vous pouvez corriger le numéro si nécessaire.",
-            "phoneLabel": "Numéro de Téléphone",
+            "confirmResend": "Voulez-vous renvoyer le lien sécurisé au patient ?",
+            "newPhone": "Corriger le numéro si nécessaire",
             "btn_confirm": "Confirmer l'Envoi",
-            "resentSuccess": "Notification renvoyée au {{phone}}"
+            "resentSuccess": "Notification renvoyée au {{phone}}",
+            "preview_error": "Échec du chargement de la prévisualisation"
         }
+    },
+    "upload": {
+        "title": "Nouveau Résultat",
+        "dragDrop": "Glissez-déposez le PDF ici",
+        "browse": "ou cliquez pour parcourir",
+        "parsing": "Analyse du PDF en cours...",
+        "folderRef": "Référence Dossier",
+        "dob": "Date de Naissance",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "Email (Optionnel)",
+        "phone": "Téléphone Mobile",
+        "btn_send": "Envoyer Résultat",
+        "btn_uploading": "Envoi en cours...",
+        "success": "Document envoyé avec succès au patient",
+        "ocr": {
+            "extracted": "Données extraites automatiquement",
+            "high": "Confiance élevée",
+            "medium": "Confiance moyenne",
+            "low": "À vérifier"
+        }
+    },
+    "settings": {
+        "title": "Paramètres Labo",
+        "subtitle": "Gérez la configuration de votre laboratoire",
+        "tabs": {
+            "general": "Général",
+            "api": "Clés API",
+            "sms": "Quota SMS"
+        },
+        "general": {
+            "name": "Nom du Laboratoire",
+            "address": "Adresse",
+            "logo": "Logo du Labo",
+            "logoDesc": "Affiché sur le portail patient et les documents",
+            "logoHint": "PNG, JPG jusqu'à 2 Mo",
+            "senderId": "SMS Sender ID",
+            "senderIdHint": "Modification soumise à validation opérateur. Contactez le support.",
+            "retention": {
+                "title": "Disponibilité des résultats",
+                "policy": "Politique d'anonymisation",
+                "policyDesc": "Délai avant suppression des fichiers et masquage des données sensibles.",
+                "label": "Période de rétention",
+                "hint": "Passé ce délai, le patient doit contacter le labo pour une copie physique.",
+                "min": "7 jours",
+                "max": "{{days}} jours (max)",
+                "limitError": "Votre plan actuel est limité à {{days}} jours. Contactez le support.",
+                "minError": "La durée minimale de rétention est de 7 jours."
+            }
+        },
+        "api": {
+            "title": "Clés d'Intégration SIL",
+            "subtitle": "Utilisez ces clés pour interfacer votre logiciel de laboratoire.",
+            "btn_generate": "Générer Clé API",
+            "modal": {
+                "create": "Générer une nouvelle clé",
+                "save": "Sauvegardez votre clé !",
+                "saveDesc": "Veuillez la noter soigneusement ; elle ne sera plus affichée.",
+                "name": "Nom de la clé",
+                "btn_confirm": "J'ai enregistré ma clé",
+                "success": "Clé API générée avec succès"
+            },
+            "table": {
+                "name": "Nom",
+                "prefix": "Préfixe",
+                "info": "Créé le {{date}} • {{used}}",
+                "revoked": "Clé révoquée"
+            }
+        },
+        "sms": {
+            "title": "Crédits SMS",
+            "used": "Utilisés",
+            "remaining": "Restants",
+            "thisMonth": "Mois en cours",
+            "warning": "Solde critique",
+            "warningDesc": "Il vous reste moins de 100 crédits. Les envois pourraient être bloqués.",
+            "btn_recharge": "Demander des crédits",
+            "hint": "1 SMS = 1 crédit (160 caractères). Crédits partagés par toute l'organisation."
+        }
+    },
+    "team": {
+        "title": "Gestion d'Équipe",
+        "subtitle": "Gérez les accès du personnel et les techniciens.",
+        "addMember": "Ajouter un membre",
+        "searchPlaceholder": "Rechercher par nom ou email...",
+        "confirmStatus": "Êtes-vous sûr de vouloir modifier le statut de ce membre ?",
+        "confirmResetTooltip": "Changer le mot de passe",
+        "resetSent": "Un email de réinitialisation a été envoyé.",
+        "table": {
+            "name": "Nom / Email",
+            "role": "Rôle",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "modal": {
+            "title": "Inviter un nouveau membre",
+            "firstName": "First Name",
+            "lastName": "Nom",
+            "email": "Email",
+            "role": "Rôle de l'utilisateur",
+            "roles": {
+                "technician": "Technicien",
+                "viewer": "Consultant (Lecture seule)"
+            },
+            "cancel": "Annuler",
+            "submit": "Envoyer l'invitation"
+        }
+    },
+    "tenants": {
+        "title": "Laboratoires Partenaires",
+        "subtitle": "Gestion des organisations et des quotas SMS",
+        "createButton": "Nouveau Laboratoire",
+        "stats": {
+            "total": "Total Labs",
+            "active": "Labs Actifs",
+            "sms": "Total SMS Plateforme"
+        },
+        "table": {
+            "name": "Nom du Labo",
+            "senderId": "Sender ID",
+            "balance": "Solde SMS",
+            "credits": "crédits",
+            "users": "Utilisateurs"
+        },
+        "modals": {
+            "createTitle": "Créer un Laboratoire",
+            "editTitle": "Modifier le Laboratoire",
+            "configTitle": "Configuration SMS",
+            "nameLabel": "Nom du Laboratoire",
+            "slugLabel": "Slug (URL)",
+            "niuLabel": "Numéro NIU",
+            "emailLabel": "Email Administratif",
+            "emailDesc": "Sert d'identifiant pour le compte administrateur du labo.",
+            "passwordLabel": "Mot de passe initial",
+            "passwordPlaceholder": "Définir un mot de passe temporaire",
+            "quotaLabel": "Quota SMS Initial",
+            "retentionLabel": "Limite de Rétention Maximale",
+            "retentionDesc": "Le labo ne pourra pas dépasser ce délai dans ses réglages.",
+            "senderIdLabel": "Sender ID (SMS)",
+            "senderIdWarning": "Doit être validé par l'opérateur local.",
+            "creditsLabel": "Ajouter des crédits",
+            "currentBalance": "Solde actuel",
+            "success_create": "Laboratoire {{name}} créé avec succès",
+            "success_update": "Laboratoire mis à jour",
+            "success_config": "Configuration SMS de {{name}} mise à jour",
+            "confirm_suspend": "Êtes-vous sûr de vouloir suspendre ce laboratoire ? Les accès seront coupés.",
+            "success_suspend": "Laboratoire suspendu"
+        }
+    },
+    "users": {
+        "title": "Annuaire des Utilisateurs",
+        "subtitle": "Gestion globale de tous les comptes plateforme",
+        "createButton": "Créer un Utilisateur",
+        "searchPlaceholder": "Rechercher un utilisateur...",
+        "allRoles": "Tous les rôles",
+        "noOrganization": "Administration Plateforme",
+        "impersonateConfirm": "Se connecter en tant que cet utilisateur ?",
+        "table": {
+            "user": "Utilisateur",
+            "role": "Rôle",
+            "organization": "Organisation",
+            "status": "Statut"
+        },
+        "createUser": "Nouvel Utilisateur",
+        "editUser": "Modifier l'Utilisateur",
+        "organization": "Laboratoire / Affectation",
+        "firstName": "Prénom",
+        "lastName": "Nom",
+        "email": "Email",
+        "password": "Mot de passe",
+        "role": "Rôle",
+        "dangerZone": "Zone Sensible",
+        "passwordOverride": "Saisir pour forcer un nouveau mot de passe",
+        "saveChanges": "Enregistrer les modifications"
+    },
+    "audit": {
+        "title": "Journaux d'Audit",
+        "subtitle": "Historique complet des actions effectuées sur la plateforme",
+        "table": {
+            "date": "Date & Heure",
+            "action": "Action",
+            "description": "Description",
+            "context": "Laboratoire",
+            "platform": "Plateforme"
+        }
+    },
+    "platform": {
+        "title": "Paramètres Plateforme",
+        "subtitle": "Configuration globale du système MedLab",
+        "success": "Configuration mise à jour avec succès",
+        "error": "Erreur lors de la mise à jour",
+        "tabs": {
+            "general": "Général",
+            "sms": "Passerelle SMS",
+            "smtp": "Serveur SMTP",
+            "retention": "Rétention Globale"
+        },
+        "general": {
+            "maintenance": "Mode Maintenance",
+            "maintenanceDesc": "Gèle les accès pour tous les laboratoires.",
+            "maintenanceWarn": "Le mode maintenance est activé.",
+            "announcement": "Annonce Globale",
+            "announcementDesc": "Message affiché en haut de toutes les pages.",
+            "saveButton": "Enregistrer la config générale"
+        },
+        "sms": {
+            "sensitive": "Configuration Sensible",
+            "sensitiveDesc": "Ces paramètres contrôlent la livraison des SMS sensibles.",
+            "provider": "Fournisseur",
+            "apiKey": "Clé API",
+            "apiSecret": "Secret API",
+            "baseUrl": "URL de base (Generic)",
+            "testButton": "Tester la connexion",
+            "testSuccess": "Connexion à la passerelle SMS réussie",
+            "sending": "Envoi...",
+            "saveButton": "Sauvegarder la config SMS"
+        },
+        "smtp": {
+            "title": "Configuration Email",
+            "desc": "Paramètres pour l'envoi des liens magiques et notifications par email.",
+            "host": "Serveur SMTP",
+            "port": "Port",
+            "secure": "Connexion sécurisée (SSL/TLS)",
+            "user": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "fromEmail": "Email expéditeur",
+            "testButton": "Envoyer un email de test",
+            "testSuccess": "Email de test envoyé à {{email}}",
+            "saveButton": "Sauvegarder la config SMTP"
+        },
+        "retention": {
+            "title": "Limites de Rétention par défaut",
+            "desc": "Définit les limites contractuelles pour les nouveaux laboratoires.",
+            "default": "Rétention par défaut (jours)",
+            "defaultDesc": "Appliqué lors de la création d'un nouveau laboratoire.",
+            "max": "Rétention maximale autorisée",
+            "maxDesc": "Le labo ne pourra pas dépasser cette valeur dans ses réglages.",
+            "saveButton": "Enregistrer les limites"
+        }
+    },
+    "landing": {
+        "header": {
+            "login": "Espace Partenaire"
+        },
+        "hero": {
+            "badge": "Conformité HDS",
+            "title": "Distribution Sécurisée",
+            "subtitle": "des Résultats au Cameroun",
+            "desc": "Livrez instantanément les résultats médicaux via SMS sécurisé et Email. Plus rapide, plus sûr, conforme aux standards internationaux.",
+            "cta": "Accéder au Portail Labo"
+        },
+        "patient": {
+            "title": "Vous êtes un patient et cherchez vos résultats ?",
+            "cardTitle": "Consultez vos SMS",
+            "cardDesc": "Vous n'avez pas besoin de compte ici. Votre laboratoire vous envoie un lien sécurisé directement sur votre mobile par SMS.",
+            "cardFooter": "En cas de non-réception, contactez directement votre laboratoire de biologie."
+        },
+        "features": {
+            "security": {
+                "title": "Sécurité de niveau bancaire",
+                "desc": "Chiffrement AES-256 et conformité totale avec les normes de santé."
+            },
+            "delivery": {
+                "title": "Vitesse de distribution",
+                "desc": "Résultats envoyés dès validation technique par le biologiste."
+            },
+            "expiration": {
+                "title": "Liens éphémères",
+                "desc": "Les accès expirent automatiquement pour garantir la confidentialité."
+            }
+        },
+        "footer": {
+            "rights": "Tous droits réservés.",
+            "legal": "Mentions Légales",
+            "privacy": "Confidentialité",
+            "support": "Assistance technique"
+        }
+    },
+    "expired": {
+        "title": "Lien de document expiré",
+        "desc": "Ce document n'est plus disponible en ligne conformément à la politique de rétention (Sécurité HDS).",
+        "copy": {
+            "title": "Besoin d'un duplicata ?",
+            "desc": "Veuillez contacter le secrétariat de votre laboratoire pour récupérer une version physique."
+        },
+        "reference": "Réf : LIMITE_RETENTION_HDS"
     }
 }

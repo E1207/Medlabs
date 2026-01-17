@@ -93,24 +93,24 @@ export function PlatformSettings() {
                     general: generalConfig,
                 }),
             });
-            addToast('Configuration saved successfully', 'success');
+            addToast(t('platform.success'), 'success');
         } catch (err) {
             console.error(err);
-            addToast('Failed to save configuration', 'error');
+            addToast(t('platform.error'), 'error');
         }
     };
 
     const handleTestSmsConnection = async () => {
         setTestingConnection(true);
         await new Promise((resolve) => setTimeout(resolve, 1500));
-        addToast('SMS test sent to admin phone', 'success');
+        addToast(t('platform.sms.testSuccess'), 'success');
         setTestingConnection(false);
     };
 
     const handleSendTestEmail = async () => {
         setTestingEmail(true);
         await new Promise((resolve) => setTimeout(resolve, 1500));
-        addToast('Test email sent to ' + user?.email, 'success');
+        addToast(t('platform.smtp.testSuccess', { email: user?.email }), 'success');
         setTestingEmail(false);
     };
 
@@ -154,7 +154,7 @@ export function PlatformSettings() {
                     </div>
 
                     <Button onClick={saveConfig} className="gap-2">
-                        <Check className="w-4 h-4" /> Save General Settings
+                        <Check className="w-4 h-4" /> {t('platform.general.saveButton')}
                     </Button>
                 </div>
             )
@@ -232,11 +232,11 @@ export function PlatformSettings() {
                     <div className="flex gap-3 pt-4">
                         <Button onClick={handleTestSmsConnection} disabled={testingConnection} className="bg-gray-200 text-gray-800 hover:bg-gray-300">
                             <Send className="w-4 h-4 mr-2" />
-                            {testingConnection ? 'Sending...' : t('platform.sms.testButton')}
+                            {testingConnection ? t('platform.sms.sending') : t('platform.sms.testButton')}
                         </Button>
                         <Button onClick={saveConfig}>
                             <Check className="w-4 h-4 mr-2" />
-                            Save Configuration
+                            {t('platform.sms.saveButton')}
                         </Button>
                     </div>
                 </div>
@@ -244,40 +244,40 @@ export function PlatformSettings() {
         },
         {
             id: 'smtp',
-            label: 'SMTP (Email)',
+            label: t('platform.tabs.smtp'),
             content: (
                 <div className="space-y-6 max-w-xl">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
                         <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <div className="text-sm text-blue-800">
-                            <p className="font-medium">Email Configuration</p>
-                            <p>Used for system notifications, password resets, and alerts.</p>
+                            <p className="font-medium">{t('platform.smtp.title')}</p>
+                            <p>{t('platform.smtp.desc')}</p>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">SMTP Host</label>
+                            <label className="block text-sm font-medium mb-1">{t('platform.smtp.host')}</label>
                             <input type="text" className="w-full border rounded-lg px-3 py-2" value={smtpConfig.host} onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Port</label>
+                            <label className="block text-sm font-medium mb-1">{t('platform.smtp.port')}</label>
                             <input type="number" className="w-full border rounded-lg px-3 py-2" value={smtpConfig.port} onChange={(e) => setSmtpConfig({ ...smtpConfig, port: parseInt(e.target.value) || 587 })} />
                         </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <input type="checkbox" id="secure" checked={smtpConfig.secure} onChange={(e) => setSmtpConfig({ ...smtpConfig, secure: e.target.checked })} className="w-4 h-4 rounded" />
-                        <label htmlFor="secure" className="text-sm font-medium">Use SSL/TLS</label>
+                        <label htmlFor="secure" className="text-sm font-medium">{t('platform.smtp.secure')}</label>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Username</label>
+                        <label className="block text-sm font-medium mb-1">{t('platform.smtp.user')}</label>
                         <input type="text" className="w-full border rounded-lg px-3 py-2" value={smtpConfig.user} onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })} />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Password</label>
+                        <label className="block text-sm font-medium mb-1">{t('platform.smtp.password')}</label>
                         <div className="relative">
                             <input type={showSmtpPassword ? 'text' : 'password'} className="w-full border rounded-lg px-3 py-2 pr-10" value={smtpConfig.password} onChange={(e) => setSmtpConfig({ ...smtpConfig, password: e.target.value })} />
                             <button type="button" onClick={() => setShowSmtpPassword(!showSmtpPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -287,18 +287,18 @@ export function PlatformSettings() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">System From Email</label>
+                        <label className="block text-sm font-medium mb-1">{t('platform.smtp.fromEmail')}</label>
                         <input type="email" className="w-full border rounded-lg px-3 py-2" value={smtpConfig.fromEmail} onChange={(e) => setSmtpConfig({ ...smtpConfig, fromEmail: e.target.value })} placeholder="no-reply@medlab.cm" />
                     </div>
 
                     <div className="flex gap-3 pt-4">
                         <Button onClick={handleSendTestEmail} disabled={testingEmail} className="bg-gray-200 text-gray-800 hover:bg-gray-300">
                             <Send className="w-4 h-4 mr-2" />
-                            {testingEmail ? 'Sending...' : 'Send Test Email'}
+                            {testingEmail ? t('platform.sms.sending') : t('platform.smtp.testButton')}
                         </Button>
                         <Button onClick={saveConfig}>
                             <Check className="w-4 h-4 mr-2" />
-                            Save Configuration
+                            {t('platform.smtp.saveButton')}
                         </Button>
                     </div>
                 </div>
@@ -306,14 +306,14 @@ export function PlatformSettings() {
         },
         {
             id: 'retention',
-            label: 'Data Retention',
+            label: t('platform.tabs.retention'),
             content: (
                 <div className="space-y-6 max-w-xl">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
                         <Check className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                         <div className="text-sm text-blue-800">
-                            <p className="font-medium">HDS / GDPR Compliance</p>
-                            <p>Configure automated deletion of medical documents to minimize data footprint.</p>
+                            <p className="font-medium">{t('platform.retention.title')}</p>
+                            <p>{t('platform.retention.desc')}</p>
                         </div>
                     </div>
 
@@ -347,7 +347,7 @@ export function PlatformSettings() {
 
                     <Button onClick={saveConfig} className="gap-2">
                         <Check className="w-4 h-4" />
-                        Save Retention Policy
+                        {t('platform.retention.saveButton')}
                     </Button>
                 </div>
             )

@@ -68,21 +68,21 @@ export function GlobalUsers() {
         try {
             const payload = { ...formData };
             if (payload.role === 'SUPER_ADMIN') {
-                delete payload.tenantId; // Explicitly remove for SA
+                delete payload.tenantId;
             }
             if (payload.role !== 'SUPER_ADMIN' && !payload.tenantId) {
-                return addToast('Organization is required for this role', 'error');
+                return addToast(t('errors.required'), 'error');
             }
 
             const res = await api.post('/admin/users', payload);
             if (!res.ok) throw new Error((await res.json()).message);
 
-            addToast('User created', 'success');
+            addToast(t('common.success'), 'success');
             setIsCreateOpen(false);
             setFormData({ firstName: '', lastName: '', email: '', password: '', role: 'TECHNICIAN', tenantId: '' });
             fetchUsers();
         } catch (err: any) {
-            addToast(err.message || 'Failed to create', 'error');
+            addToast(err.message || t('errors.failed'), 'error');
         }
     };
 
@@ -93,29 +93,29 @@ export function GlobalUsers() {
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 role: formData.role,
-                status: selectedUser.status // Status separate?
+                status: selectedUser.status
             };
             if (formData.password) payload.password = formData.password;
 
             const res = await api.patch(`/admin/users/${selectedUser.id}`, payload);
             if (!res.ok) throw new Error('Failed');
 
-            addToast('User updated', 'success');
+            addToast(t('common.success'), 'success');
             setIsEditOpen(false);
             fetchUsers();
         } catch (err) {
-            addToast('Update failed', 'error');
+            addToast(t('errors.failed'), 'error');
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this user? This cannot be undone.')) return;
+        if (!confirm(t('common.confirmDelete'))) return;
         try {
             await api.delete(`/admin/users/${id}`);
-            addToast('User deleted', 'success');
+            addToast(t('common.success'), 'success');
             fetchUsers();
         } catch (err) {
-            addToast('Delete failed', 'error');
+            addToast(t('errors.failed'), 'error');
         }
     };
 
@@ -124,7 +124,7 @@ export function GlobalUsers() {
         try {
             await impersonate(userId);
         } catch (error) {
-            addToast('Failed to impersonate user', 'error');
+            addToast(t('errors.failed'), 'error');
         }
     };
 
@@ -166,7 +166,7 @@ export function GlobalUsers() {
                     LAB_ADMIN: 'blue',
                     TECHNICIAN: 'gray'
                 };
-                return <Badge variant={colors[row.role] as any}>{row.role.replace('_', ' ')}</Badge>;
+                return <Badge variant={colors[row.role] as any}>{t(`roles.${row.role}`)}</Badge>;
             }
         },
         {
@@ -176,7 +176,7 @@ export function GlobalUsers() {
                 <div className="flex items-center gap-1 text-slate-700">
                     <Building2 className="w-3 h-3" /> {row.tenant.name}
                 </div>
-            ) : <span className="text-purple-600 font-medium text-xs">Platform Staff</span>
+            ) : <span className="text-purple-600 font-medium text-xs">{t('users.noOrganization')}</span>
         },
         {
             key: 'status',
@@ -184,7 +184,7 @@ export function GlobalUsers() {
             render: (row: GlobalUser) => (
                 <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${row.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <span className="text-sm font-medium text-slate-700 capitalize">{row.status.toLowerCase()}</span>
+                    <span className="text-sm font-medium text-slate-700 capitalize">{t(`status.${row.status.toLowerCase()}`)}</span>
                 </div>
             )
         },
@@ -193,7 +193,7 @@ export function GlobalUsers() {
             header: '',
             render: (row: GlobalUser) => (
                 <div className="flex gap-1 justify-end">
-                    <Button variant="ghost" size="sm" onClick={() => handleImpersonate(row.id)} title="Log in as this user">
+                    <Button variant="ghost" size="sm" onClick={() => handleImpersonate(row.id)} title={t('users.impersonateConfirm')}>
                         <LogIn className="w-4 h-4 text-purple-600" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => openEdit(row)}><Edit2 className="w-4 h-4 text-slate-500" /></Button>
@@ -231,9 +231,9 @@ export function GlobalUsers() {
                     onChange={e => setRoleFilter(e.target.value)}
                 >
                     <option value="ALL">{t('users.allRoles')}</option>
-                    <option value="SUPER_ADMIN">Super Admins</option>
-                    <option value="LAB_ADMIN">Lab Admins</option>
-                    <option value="TECHNICIAN">Technicians</option>
+                    <option value="SUPER_ADMIN">{t('roles.SUPER_ADMIN')}</option>
+                    <option value="LAB_ADMIN">{t('roles.LAB_ADMIN')}</option>
+                    <option value="TECHNICIAN">{t('roles.TECHNICIAN')}</option>
                 </select>
             </div>
 
@@ -242,10 +242,10 @@ export function GlobalUsers() {
             </div>
 
             {/* CREATE MODAL */}
-            <Modal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="Create New User">
+            <Modal open={isCreateOpen} onClose={() => setIsCreateOpen(false)} title={t('users.createUser')}>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium mb-1">Organization</label>
+                        <label className="block text-sm font-medium mb-1">{t('users.organization')}</label>
                         <select
                             className="w-full border rounded-lg px-3 py-2"
                             value={formData.tenantId}
@@ -254,100 +254,100 @@ export function GlobalUsers() {
                                 setFormData({ ...formData, tenantId: val, role: val ? 'LAB_ADMIN' : 'SUPER_ADMIN' });
                             }}
                         >
-                            <option value="">No Organization (Platform Staff)</option>
+                            <option value="">{t('users.noOrganization')}</option>
                             {tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">First Name</label>
+                            <label className="block text-sm font-medium mb-1">{t('users.firstName')}</label>
                             <input className="w-full border rounded-lg px-3 py-2" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Last Name</label>
+                            <label className="block text-sm font-medium mb-1">{t('users.lastName')}</label>
                             <input className="w-full border rounded-lg px-3 py-2" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Email</label>
+                        <label className="block text-sm font-medium mb-1">{t('users.email')}</label>
                         <input className="w-full border rounded-lg px-3 py-2" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Initial Password</label>
+                        <label className="block text-sm font-medium mb-1">{t('users.password')}</label>
                         <input className="w-full border rounded-lg px-3 py-2" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Role</label>
+                        <label className="block text-sm font-medium mb-1">{t('users.role')}</label>
                         <select
                             className="w-full border rounded-lg px-3 py-2"
                             value={formData.role}
                             onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
                         >
-                            {!formData.tenantId && <option value="SUPER_ADMIN">Super Admin</option>}
+                            {!formData.tenantId && <option value="SUPER_ADMIN">{t('roles.SUPER_ADMIN')}</option>}
                             {formData.tenantId && (
                                 <>
-                                    <option value="LAB_ADMIN">Lab Admin</option>
-                                    <option value="TECHNICIAN">Technician</option>
+                                    <option value="LAB_ADMIN">{t('roles.LAB_ADMIN')}</option>
+                                    <option value="TECHNICIAN">{t('roles.TECHNICIAN')}</option>
                                 </>
                             )}
                         </select>
                     </div>
 
                     <div className="flex gap-2 justify-end pt-4">
-                        <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreate}>Create User</Button>
+                        <Button variant="ghost" onClick={() => setIsCreateOpen(false)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleCreate}>{t('users.createUser')}</Button>
                     </div>
                 </div>
             </Modal>
 
             {/* EDIT MODAL */}
-            <Modal open={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit User">
+            <Modal open={isEditOpen} onClose={() => setIsEditOpen(false)} title={t('users.editUser')}>
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">First Name</label>
+                            <label className="block text-sm font-medium mb-1">{t('users.firstName')}</label>
                             <input className="w-full border rounded-lg px-3 py-2" value={formData.firstName} onChange={e => setFormData({ ...formData, firstName: e.target.value })} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium mb-1">Last Name</label>
+                            <label className="block text-sm font-medium mb-1">{t('users.lastName')}</label>
                             <input className="w-full border rounded-lg px-3 py-2" value={formData.lastName} onChange={e => setFormData({ ...formData, lastName: e.target.value })} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Role</label>
+                        <label className="block text-sm font-medium mb-1">{t('users.role')}</label>
                         <select
                             className="w-full border rounded-lg px-3 py-2"
                             value={formData.role}
                             onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
                         >
-                            {!formData.tenantId && <option value="SUPER_ADMIN">Super Admin</option>}
+                            {!formData.tenantId && <option value="SUPER_ADMIN">{t('roles.SUPER_ADMIN')}</option>}
                             {formData.tenantId && (
                                 <>
-                                    <option value="LAB_ADMIN">Lab Admin</option>
-                                    <option value="TECHNICIAN">Technician</option>
+                                    <option value="LAB_ADMIN">{t('roles.LAB_ADMIN')}</option>
+                                    <option value="TECHNICIAN">{t('roles.TECHNICIAN')}</option>
                                 </>
                             )}
                         </select>
                     </div>
 
                     <div className="pt-2 border-t mt-2">
-                        <label className="block text-sm font-medium mb-1 text-red-600">Danger Zone: Reset Password</label>
+                        <label className="block text-sm font-medium mb-1 text-red-600">{t('users.dangerZone')}</label>
                         <input
                             className="w-full border border-red-200 bg-red-50 rounded-lg px-3 py-2"
-                            placeholder="Enter new password to override..."
+                            placeholder={t('users.passwordOverride')}
                             value={formData.password}
                             onChange={e => setFormData({ ...formData, password: e.target.value })}
                         />
                     </div>
 
                     <div className="flex gap-2 justify-end pt-4">
-                        <Button variant="ghost" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-                        <Button onClick={handleUpdate}>Save Changes</Button>
+                        <Button variant="ghost" onClick={() => setIsEditOpen(false)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleUpdate}>{t('users.saveChanges')}</Button>
                     </div>
                 </div>
             </Modal>

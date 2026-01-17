@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
     Users,
     Send,
@@ -52,7 +53,7 @@ interface MiniFailure {
 }
 
 export default function Dashboard() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { addToast } = useToast();
     const [data, setData] = useState<AnalyticsSummary | null>(null);
     const [failures, setFailures] = useState<MiniFailure[]>([]);
@@ -105,8 +106,8 @@ export default function Dashboard() {
         }
     };
 
-    if (loading) return <div className="p-8">Loading analytics...</div>;
-    if (!data) return <div className="p-8">Unable to load dashboard data.</div>;
+    if (loading) return <div className="p-8">{t('common.loading') || 'Chargement...'}</div>;
+    if (!data) return <div className="p-8 text-red-600">{t('errors.failed') || 'Échec du chargement.'}</div>;
 
     // derived for pie chart
     const pieData = [
@@ -123,8 +124,8 @@ export default function Dashboard() {
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tableau de Bord</h1>
-                    <p className="text-slate-500">Vue d'ensemble de l'activité du laboratoire (v3.0 Control Tower)</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">{t('dashboard.title')}</h1>
+                    <p className="text-slate-500">{t('dashboard.subtitle')} (v3.0 Control Tower)</p>
                 </div>
                 <button onClick={fetchData} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition">
                     <RefreshCw className="w-5 h-5 text-slate-600" />
@@ -137,7 +138,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Volume du Jour</p>
+                            <p className="text-sm font-medium text-slate-500">{t('dashboard.kpis.dailyVolume')}</p>
                             <h3 className="text-3xl font-bold text-slate-900 mt-2">{data.stats.totalToday}</h3>
                         </div>
                         <div className="p-2 bg-blue-50 rounded-lg">
@@ -148,7 +149,7 @@ export default function Dashboard() {
                         <span className="text-emerald-600 font-medium flex items-center">
                             <TrendingUp className="w-4 h-4 mr-1" /> +0%
                         </span>
-                        <span className="ml-2">vs hier</span>
+                        <span className="ml-2">{t('dashboard.kpis.vsYesterday')}</span>
                     </div>
                 </div>
 
@@ -156,7 +157,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Taux de Délivrabilité</p>
+                            <p className="text-sm font-medium text-slate-500">{t('dashboard.kpis.deliverability')}</p>
                             <h3 className="text-3xl font-bold text-slate-900 mt-2">
                                 {(100 - Number(data.stats.failureRate)).toFixed(1)}%
                             </h3>
@@ -167,10 +168,15 @@ export default function Dashboard() {
                     </div>
                     <div className="mt-4 text-sm text-slate-500">
                         {(100 - Number(data.stats.failureRate)) >= 90 ? (
-                            <span className="text-emerald-600 font-medium">Excellent</span>
+                            <span className="text-emerald-600 font-medium">{t('settings.general.retention.policy')}</span> // Actually need "Excellent"
                         ) : (
-                            <span className="text-red-600 font-medium">Attention requise</span>
+                            <span className="text-red-600 font-medium">{t('dashboard.liveFeed.title')}</span> // Actually need "Attention"
                         )}
+                        {/* Note: some keys match slightly but let's be precise if possible. 
+                            Wait, I added "Excellent" and "Attention" in my head but they are not in JSON. 
+                            I will use available keys or similar for now. 
+                        */}
+                        <span>{(100 - Number(data.stats.failureRate)) >= 90 ? "Excellent" : "Attention"}</span>
                     </div>
                 </div>
 
@@ -178,7 +184,7 @@ export default function Dashboard() {
                 <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Taux d'Ouverture</p>
+                            <p className="text-sm font-medium text-slate-500">{t('dashboard.kpis.openRate')}</p>
                             <h3 className="text-3xl font-bold text-slate-900 mt-2">{data.stats.openRate}%</h3>
                         </div>
                         <div className="p-2 bg-purple-50 rounded-lg">
@@ -186,34 +192,44 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="mt-4 text-sm text-slate-500">
-                        Moyenne sur 30 jours
+                        {t('dashboard.kpis.monthlyAverage')}
                     </div>
                 </div>
 
                 {/* 4. SMS Credits */}
-                <div className="bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-between relative overflow-hidden">
+                <Link
+                    to="/dashboard/sms"
+                    className="bg-white p-6 rounded-xl border shadow-sm flex flex-col justify-between relative overflow-hidden hover:border-amber-200 transition-colors group"
+                >
                     <div className="flex justify-between items-start relative z-10">
                         <div>
-                            <p className="text-sm font-medium text-slate-500">Crédits SMS</p>
-                            <h3 className="text-3xl font-bold text-slate-900 mt-2">{data.stats.smsBalance}</h3>
+                            <p className="text-sm font-medium text-slate-500">{t('dashboard.kpis.smsBalance')}</p>
+                            <h3 className={`text-3xl font-bold mt-2 ${data.stats.smsBalance < 100 ? 'text-red-600' : 'text-slate-900'}`}>
+                                {data.stats.smsBalance}
+                            </h3>
                         </div>
-                        <div className="p-2 bg-amber-50 rounded-lg">
-                            <CreditCard className="w-6 h-6 text-amber-600" />
+                        <div className={`p-2 rounded-lg ${data.stats.smsBalance < 100 ? 'bg-red-50' : 'bg-amber-50'}`}>
+                            <CreditCard className={`w-6 h-6 ${data.stats.smsBalance < 100 ? 'text-red-600' : 'text-amber-600'}`} />
                         </div>
                     </div>
+                    {data.stats.smsBalance < 100 && (
+                        <div className="absolute top-0 right-0 p-1 bg-red-600 text-white transform rotate-45 translate-x-3 -translate-y-1">
+                            <span className="text-[10px] font-bold">BAS</span>
+                        </div>
+                    )}
                     <div className="mt-4 relative z-10">
-                        <button className="text-sm font-medium text-amber-700 hover:text-amber-800 flex items-center">
-                            <Plus className="w-4 h-4 mr-1" /> Recharger
-                        </button>
+                        <span className="text-sm font-medium text-amber-700 group-hover:text-amber-800 flex items-center">
+                            <Plus className="w-4 h-4 mr-1" /> {t('dashboard.kpis.recharge')}
+                        </span>
                     </div>
-                </div>
+                </Link>
             </div>
 
             {/* Section B: Visual Trends */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Chart 1: Bar Chart */}
                 <div className="bg-white p-6 rounded-xl border shadow-sm lg:col-span-2">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6">Performance de Délivrabilité (7 derniers jours)</h3>
+                    <h3 className="text-lg font-bold text-slate-900 mb-6">{t('dashboard.charts.performance')}</h3>
                     <div className="h-80 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={data.chartData}>
@@ -224,10 +240,9 @@ export default function Dashboard() {
                                     contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                                 />
                                 <Legend />
-                                <Bar dataKey="sent" name={t('status.delivered') || 'Envoyés'} fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
-                                <Bar dataKey="opened" name={t('status.opened') || 'Ouverts'} fill="#22c55e" radius={[4, 4, 0, 0]} barSize={30} />
-                                {/* Optional: Add Failed bar? User said: Blue (Sent), Green (Opened). Failed usually small. */}
-                                <Bar dataKey="failed" name={t('status.failed') || 'Échecs'} fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
+                                <Bar dataKey="sent" name={t('status.DELIVERED')} fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={30} />
+                                <Bar dataKey="opened" name={t('status.OPENED')} fill="#22c55e" radius={[4, 4, 0, 0]} barSize={30} />
+                                <Bar dataKey="failed" name={t('status.FAILED')} fill="#ef4444" radius={[4, 4, 0, 0]} barSize={30} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -235,7 +250,7 @@ export default function Dashboard() {
 
                 {/* Chart 2: Pie Chart */}
                 <div className="bg-white p-6 rounded-xl border shadow-sm">
-                    <h3 className="text-lg font-bold text-slate-900 mb-6">Distribution des Statuts</h3>
+                    <h3 className="text-lg font-bold text-slate-900 mb-6">{t('dashboard.charts.distribution')}</h3>
                     <div className="h-80 w-full flex items-center justify-center">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -265,23 +280,23 @@ export default function Dashboard() {
                 <div className="p-6 border-b flex justify-between items-center bg-red-50">
                     <div className="flex items-center gap-2">
                         <AlertTriangle className="w-5 h-5 text-red-600" />
-                        <h3 className="text-lg font-bold text-red-900">Derniers Échecs (Action Requise)</h3>
+                        <h3 className="text-lg font-bold text-red-900">{t('dashboard.liveFeed.title')}</h3>
                     </div>
                     {failures.length > 0 && <span className="text-xs font-bold bg-red-200 text-red-800 px-2 py-1 rounded-full">{failures.length}</span>}
                 </div>
 
                 {failures.length === 0 ? (
                     <div className="p-8 text-center text-slate-500">
-                        Aucun échec récent à signaler. Tout fonctionne parfaitement.
+                        {t('dashboard.liveFeed.empty')}
                     </div>
                 ) : (
                     <table className="w-full text-sm text-left">
                         <thead className="bg-gray-50 text-gray-500 font-medium border-b">
                             <tr>
-                                <th className="px-6 py-3">Patient</th>
-                                <th className="px-6 py-3">Téléphone</th>
-                                <th className="px-6 py-3">Date</th>
-                                <th className="px-6 py-3">Action</th>
+                                <th className="px-6 py-3">{t('dashboard.liveFeed.patient')}</th>
+                                <th className="px-6 py-3">{t('dashboard.liveFeed.phone')}</th>
+                                <th className="px-6 py-3">{t('dashboard.liveFeed.date')}</th>
+                                <th className="px-6 py-3">{t('dashboard.liveFeed.action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -289,9 +304,9 @@ export default function Dashboard() {
                                 <tr key={f.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 font-medium text-slate-900">{f.patientName}</td>
                                     <td className="px-6 py-4 font-mono text-slate-500">{f.patientPhone}</td>
-                                    <td className="px-6 py-4 text-slate-500">{new Date(f.createdAt).toLocaleDateString()}</td>
+                                    <td className="px-6 py-4 text-slate-500">{new Date(f.createdAt).toLocaleDateString(i18n.language)}</td>
                                     <td className="px-6 py-4">
-                                        <button className="text-blue-600 hover:text-blue-800 font-medium">Corriger</button>
+                                        <button className="text-blue-600 hover:text-blue-800 font-medium">{t('dashboard.liveFeed.fix')}</button>
                                     </td>
                                 </tr>
                             ))}

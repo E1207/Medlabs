@@ -1,9 +1,11 @@
 
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Mail, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
 
 export function ForgotPassword() {
+    const { t } = useTranslation();
     const [email, setEmail] = React.useState('');
     const [loading, setLoading] = React.useState(false);
     const [submitted, setSubmitted] = React.useState(false);
@@ -23,7 +25,7 @@ export function ForgotPassword() {
             // We succeed regardless of user existence (security)
             setSubmitted(true);
         } catch (err) {
-            setError('An error occurred. Please try again.');
+            setError(t('errors.failed'));
         } finally {
             setLoading(false);
         }
@@ -35,8 +37,8 @@ export function ForgotPassword() {
                 {!submitted ? (
                     <>
                         <div className="text-center">
-                            <h2 className="text-2xl font-bold text-slate-900">Reset Password</h2>
-                            <p className="text-slate-500 mt-2">Enter your email to receive recovery instructions.</p>
+                            <h2 className="text-2xl font-bold text-slate-900">{t('auth.forgot.title')}</h2>
+                            <p className="text-slate-500 mt-2">{t('auth.forgot.subtitle')}</p>
                         </div>
 
                         {error && (
@@ -47,7 +49,7 @@ export function ForgotPassword() {
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-700">Email Address</label>
+                                <label className="text-sm font-medium text-slate-700">{t('auth.email')}</label>
                                 <div className="relative">
                                     <Mail className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                                     <input
@@ -66,7 +68,7 @@ export function ForgotPassword() {
                                 className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                                Send Reset Link
+                                {t('auth.forgot.submit')}
                             </button>
                         </form>
                     </>
@@ -75,9 +77,9 @@ export function ForgotPassword() {
                         <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
                             <CheckCircle className="w-6 h-6" />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-900">Check your email</h2>
+                        <h2 className="text-2xl font-bold text-slate-900">{t('auth.forgot.successTitle')}</h2>
                         <p className="text-slate-500">
-                            If an account exists for <strong>{email}</strong>, you will receive a password reset link shortly.
+                            {t('auth.forgot.successDesc', { email })}
                         </p>
                     </div>
                 )}
@@ -85,7 +87,7 @@ export function ForgotPassword() {
                 <div className="text-center pt-2">
                     <Link to="/login" className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2">
                         <ArrowLeft className="w-4 h-4" />
-                        Back to Login
+                        {t('auth.forgot.backToLogin')}
                     </Link>
                 </div>
             </div>

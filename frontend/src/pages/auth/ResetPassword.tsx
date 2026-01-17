@@ -1,9 +1,11 @@
 
 import * as React from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
 export function ResetPassword() {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
     const navigate = useNavigate();
@@ -17,11 +19,11 @@ export function ResetPassword() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (password !== confirm) {
-            setError('Passwords do not match');
+            setError(t('auth.reset.errorMismatch'));
             return;
         }
         if (!token) {
-            setError('Invalid or missing token');
+            setError(t('errors.failed'));
             return;
         }
 
@@ -39,7 +41,7 @@ export function ResetPassword() {
             setSuccess(true);
             setTimeout(() => navigate('/login'), 3000);
         } catch (err) {
-            setError('Invalid or expired token. Please request a new link.');
+            setError(t('errors.failed'));
         } finally {
             setLoading(false);
         }
@@ -50,9 +52,9 @@ export function ResetPassword() {
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
                 <div className="bg-white p-8 rounded-xl shadow border text-center">
                     <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold mb-2">Invalid Link</h2>
-                    <p className="text-slate-500 mb-4">This password reset link is invalid or missing.</p>
-                    <Link to="/login" className="text-primary hover:underline">Return to Login</Link>
+                    <h2 className="text-xl font-bold mb-2">{t('errors.failed')}</h2>
+                    <p className="text-slate-500 mb-4">{t('errors.failed')}</p>
+                    <Link to="/login" className="text-primary hover:underline">{t('auth.forgot.backToLogin')}</Link>
                 </div>
             </div>
         );
@@ -62,15 +64,15 @@ export function ResetPassword() {
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg border p-8 space-y-6">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-slate-900">Set New Password</h2>
-                    <p className="text-slate-500 mt-2">Choose a secure password for your account.</p>
+                    <h2 className="text-2xl font-bold text-slate-900">{t('auth.reset.title')}</h2>
+                    <p className="text-slate-500 mt-2">{t('auth.reset.subtitle')}</p>
                 </div>
 
                 {success ? (
                     <div className="bg-green-50 text-green-700 p-4 rounded-lg text-center space-y-2">
                         <CheckCircle className="w-6 h-6 mx-auto" />
-                        <p className="font-medium">Password Updated!</p>
-                        <p className="text-sm">Redirecting to login...</p>
+                        <p className="font-medium">{t('auth.reset.successTitle')}</p>
+                        <p className="text-sm">{t('auth.reset.successDesc')}</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,7 +82,7 @@ export function ResetPassword() {
                             </div>
                         )}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">New Password</label>
+                            <label className="text-sm font-medium text-slate-700">{t('auth.reset.label')}</label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                                 <input
@@ -93,7 +95,7 @@ export function ResetPassword() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-slate-700">Confirm Password</label>
+                            <label className="text-sm font-medium text-slate-700">{t('auth.reset.confirmLabel')}</label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                                 <input
@@ -111,7 +113,7 @@ export function ResetPassword() {
                             className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                            Update Password
+                            {t('auth.reset.submit')}
                         </button>
                     </form>
                 )}

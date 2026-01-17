@@ -6,9 +6,10 @@ interface RequestOptions extends RequestInit {
 
 async function request(endpoint: string, options: RequestOptions = {}) {
     const token = localStorage.getItem('token');
-
+    const language = localStorage.getItem('i18nextLng') || 'fr';
     const headers: Record<string, string> = {
         'Content-Type': 'application/json',
+        'Accept-Language': language,
         ...options.headers,
     };
 
