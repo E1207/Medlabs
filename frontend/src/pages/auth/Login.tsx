@@ -117,6 +117,34 @@ export function Login() {
                     </button>
                 </form>
 
+                {/* Demo Account Quick Login Buttons */}
+                <div className="border-t pt-4 space-y-2">
+                    <p className="text-xs text-slate-400 text-center mb-2">Comptes de démonstration</p>
+                    <div className="grid grid-cols-3 gap-2">
+                        <button
+                            type="button"
+                            onClick={() => { setEmail('admin@medlab.cm'); setPassword('pass123'); }}
+                            className="px-2 py-1.5 text-xs bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors"
+                        >
+                            Super Admin
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setEmail('lab@medlab.cm'); setPassword('pass123'); }}
+                            className="px-2 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                        >
+                            Lab Admin
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setEmail('tech@medlab.cm'); setPassword('pass123'); }}
+                            className="px-2 py-1.5 text-xs bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors"
+                        >
+                            Technician
+                        </button>
+                    </div>
+                </div>
+
                 <div className="text-center pt-4 border-t">
                     <p className="text-sm text-slate-500">
                         {t('auth.notPartner')} <Link to="#" className="text-primary hover:underline">{t('auth.contactSales')}</Link>

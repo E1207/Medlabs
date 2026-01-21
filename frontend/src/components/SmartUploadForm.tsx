@@ -182,7 +182,7 @@ export function SmartUploadForm() {
 
         try {
             // Mock API call
-            const response = await fetch('http://localhost:3000/results', {
+            const response = await fetch('http://localhost:3001/results', {
                 method: 'POST',
                 body: formData,
             });

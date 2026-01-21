@@ -5,7 +5,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/u
 import { OtpInput } from '@/components/OtpInput';
 import { Shield, Loader2, CheckCircle, AlertTriangle, Download, FileText } from 'lucide-react';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'http://localhost:3001';
 
 type WizardState = 'loading' | 'challenge' | 'otp' | 'dob' | 'success' | 'error';
 
