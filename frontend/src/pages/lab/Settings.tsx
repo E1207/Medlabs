@@ -32,6 +32,7 @@ export function Settings() {
     const [labAddress, setLabAddress] = React.useState('123 Rue du Centre, Yaoundé');
     const [configuredRetentionDays, setConfiguredRetentionDays] = React.useState(30);
     const [maxRetentionDays, setMaxRetentionDays] = React.useState(30); // Limite du contrat
+    const [importFolderPath, setImportFolderPath] = React.useState('');
 
     React.useEffect(() => {
         // Fetch Tenant Settings
@@ -44,6 +45,7 @@ export function Settings() {
                 if (data.address) setLabAddress(data.address);
                 if (data.configuredRetentionDays) setConfiguredRetentionDays(data.configuredRetentionDays);
                 if (data.maxRetentionDays) setMaxRetentionDays(data.maxRetentionDays);
+                if (data.importFolderPath) setImportFolderPath(data.importFolderPath);
             })
             .catch(err => console.error(err));
     }, []);
@@ -70,7 +72,8 @@ export function Settings() {
                 body: JSON.stringify({
                     name: labName,
                     address: labAddress,
-                    configuredRetentionDays: configuredRetentionDays
+                    configuredRetentionDays: configuredRetentionDays,
+                    importFolderPath: importFolderPath
                 }),
             });
 
@@ -231,6 +234,26 @@ export function Settings() {
                                     <AlertTriangle className="w-3.5 h-3.5 text-amber-600 inline mr-1" />
                                     {t('settings.general.retention.hint')}
                                 </p>
+                            </div>
+
+                            <div className="pt-4 border-t">
+                                <h3 className="font-medium mb-3">{t('settings.general.import.title')}</h3>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                    {t('settings.general.import.desc')}
+                                </p>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">{t('settings.general.import.pathLabel')}</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg px-3 py-2 font-mono text-sm"
+                                        placeholder="/Users/nom/Documents/Analyses"
+                                        value={importFolderPath}
+                                        onChange={(e) => setImportFolderPath(e.target.value)}
+                                    />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        {t('settings.general.import.hint')}
+                                    </p>
+                                </div>
                             </div>
 
                             <Button onClick={saveSettings}>

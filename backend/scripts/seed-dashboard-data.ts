@@ -8,10 +8,8 @@ const lastNames = ['Nkomo', 'Fotso', 'Tchamba', 'Mbarga', 'Essomba', 'Onana', 'N
 
 // Distribution réaliste des statuts (majorité succès)
 const statusWeights: { status: DocumentStatus; weight: number }[] = [
-    { status: 'UPLOADED', weight: 5 },
-    { status: 'NOTIFIED', weight: 10 },
-    { status: 'DELIVERED', weight: 40 },
-    { status: 'OPENED', weight: 35 },
+    { status: 'SENT', weight: 15 },
+    { status: 'CONSULTED', weight: 75 },
     { status: 'FAILED', weight: 10 },
 ];
 
@@ -22,7 +20,7 @@ function getRandomStatus(): DocumentStatus {
         random -= sw.weight;
         if (random <= 0) return sw.status;
     }
-    return 'DELIVERED';
+    return 'CONSULTED';
 }
 
 function getRandomPhone(): string {

@@ -1,7 +1,10 @@
 import {
     Controller,
+    Get,
     Post,
     Body,
+    Query,
+    Header,
     UnauthorizedException,
     BadRequestException,
     NotFoundException,
@@ -13,30 +16,20 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { SmsService } from '../notifications/sms.service';
+import { StorageService } from '../storage/storage.service';
 import * as bcrypt from 'bcrypt';
+import { DocumentStatus } from '@prisma/client';
 import { randomInt } from 'crypto';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+
 
 @Controller('auth/guest')
 export class PatientAuthController {
-    private readonly s3Client: S3Client;
-
     constructor(
         private readonly jwtService: JwtService,
         private readonly prisma: PrismaService,
         private readonly smsService: SmsService,
-    ) {
-        this.s3Client = new S3Client({
-            region: process.env.AWS_REGION || 'us-east-1',
-            credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'minio',
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'minio123',
-            },
-            endpoint: process.env.AWS_S3_ENDPOINT || 'http://localhost:9000',
-            forcePathStyle: true, // Needed for MinIO/Localstack
-        });
-    }
+        private readonly storageService: StorageService,
+    ) { }
 
     @Post('challenge')
     @HttpCode(HttpStatus.OK)
@@ -75,10 +68,9 @@ export class PatientAuthController {
         const tokenSignature = token.split('.')[2]; // Use signature part as ID
 
         // Store in DB (Prisma OtpStore)
-        // Upsert to handle re-requests
         await this.prisma.otpStore.deleteMany({
             where: { tokenSignature },
-        }); // Clear previous attempts for this token if any (or we could just add meaningful logic)
+        });
 
         await this.prisma.otpStore.create({
             data: {
@@ -91,11 +83,11 @@ export class PatientAuthController {
 
         await this.smsService.sendOtp(document.patientPhone, code);
 
-        // Mask phone number
+        // Mask phone number (e.g. +237 *** 789)
         const phone = document.patientPhone;
-        const masked = phone ? `${phone.slice(0, 4)}***${phone.slice(-3)}` : '***';
+        const masked = phone ? `${phone.substring(0, 4)} *** ${phone.substring(phone.length - 3)}` : '***';
 
-        return { message: `OTP sent to ${masked}` };
+        return { message: `OTP envoyé au ${masked}` };
     }
 
     @Post('verify')
@@ -135,12 +127,11 @@ export class PatientAuthController {
         // 3. Verify Code
         const isMatch = await bcrypt.compare(code, otpRecord.codeHash);
         if (!isMatch) {
-            // Increment attempts
             await this.prisma.otpStore.update({
                 where: { id: otpRecord.id },
                 data: { attempts: { increment: 1 } }
             });
-            throw new ForbiddenException('Invalid OTP code');
+            throw new ForbiddenException('Code OTP invalide');
         }
 
         // 4. Success - Audit & Generate Link
@@ -151,7 +142,7 @@ export class PatientAuthController {
         if (!document) throw new NotFoundException('Document not found');
 
         if (document.status === 'EXPIRED') {
-            throw new HttpException('Document has expired due to data retention policy', HttpStatus.GONE);
+            throw new HttpException('Document expiré', HttpStatus.GONE);
         }
 
         await this.prisma.auditLog.create({
@@ -160,35 +151,30 @@ export class PatientAuthController {
                 tenantId: document.tenantId,
                 resourceId: document.id,
                 actorId: 'PATIENT',
-                description: 'Patient accessed document via proper 2FA',
+                description: 'Patient accessed document via 2FA (link + SMS)',
             }
         });
 
-        // Update Document Status if strictly needed (e.g., OPENED)
-        if (document.status !== 'OPENED') {
+        if (document.status !== ('CONSULTED' as any)) {
             await this.prisma.document.update({
                 where: { id: documentId },
-                data: { status: 'OPENED' }
+                data: { status: 'CONSULTED' as any }
             });
         }
 
         // Cleanup OTP
         await this.prisma.otpStore.delete({ where: { id: otpRecord.id } });
 
-        // Generate S3 Presigned URL
-        const command = new GetObjectCommand({
-            Bucket: process.env.AWS_S3_BUCKET_NAME || 'medlab-documents',
-            Key: document.fileKey,
-        });
+        // Generate a short-lived File Access Token (5 mins)
+        const fileToken = this.jwtService.sign(
+            { sub: document.id, key: document.fileKey, type: 'file_access' },
+            { secret: process.env.PATIENT_JWT_SECRET || 'dev_secret_key_123', expiresIn: '5m' }
+        );
 
-        // Link valid for 5 minutes
-        try {
-            const downloadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
-            return { downloadUrl, status: 'success' };
-        } catch (error) {
-            console.error(error);
-            throw new BadRequestException('Could not generate download link');
-        }
+        const baseUrl = process.env.APP_BASE_URL || 'http://localhost:5173';
+        const downloadUrl = `${baseUrl.replace('5173', '3000')}/api/auth/guest/view-file?token=${fileToken}`;
+
+        return { downloadUrl, status: 'success' };
     }
 
     @Post('verify-fallback')
@@ -197,7 +183,6 @@ export class PatientAuthController {
         const { token, dob } = body;
         if (!token || !dob) throw new BadRequestException('Token and Date of Birth are required');
 
-        // 1. Verify JWT
         try {
             this.jwtService.verify(token, {
                 secret: process.env.PATIENT_JWT_SECRET || 'dev_secret_key_123',
@@ -207,65 +192,51 @@ export class PatientAuthController {
         }
 
         const tokenSignature = token.split('.')[2];
-
-        // 2. Fetch OTP Record (Used for Rate Limiting)
-        // We assume the user has already triggered a challenge (hence accessing this fallback)
         const otpRecord = await this.prisma.otpStore.findFirst({
             where: { tokenSignature }
         });
 
         if (!otpRecord) {
-            // If no record, it usually means the session expired or wasn't started.
-            // We could be lenient and create one, but strictly speaking, fallback follows challenge.
-            throw new BadRequestException('Session invalid or expired. Please restart the process.');
+            throw new BadRequestException('Session invalide ou expirée. Veuillez recommencer.');
         }
 
         if (new Date() > otpRecord.expiresAt) {
-            throw new BadRequestException('Session has expired. Request a new link.');
-        }
-
-        if (otpRecord.attempts >= 5) {
-            throw new ForbiddenException('Too many failed attempts. Access blocked.');
+            throw new BadRequestException('Session expirée.');
         }
 
         const payload = this.jwtService.decode(token) as any;
         const documentId = payload.sub;
 
         const document = await this.prisma.document.findUnique({ where: { id: documentId } });
-        if (!document) throw new NotFoundException('Document not found');
+        if (!document) throw new NotFoundException('Document introuvable');
 
         if (document.status === 'EXPIRED') {
-            throw new HttpException('Document has expired due to data retention policy', HttpStatus.GONE);
+            throw new HttpException('Document expiré', HttpStatus.GONE);
         }
 
         if (!document.patientDob) {
-            throw new BadRequestException('Fallback authentication unavailable for this document. Please contact the Lab.');
+            throw new BadRequestException('Authentification de secours indisponible pour ce document.');
         }
 
-        // 3. Verify Date of Birth
-        // Format of input dob should be YYYY-MM-DD. Document DOB is a Date object.
         const inputDate = new Date(dob);
         const docDate = new Date(document.patientDob);
 
-        // Compare YYYY-MM-DD
         const isMatch =
             inputDate.getFullYear() === docDate.getFullYear() &&
             inputDate.getMonth() === docDate.getMonth() &&
             inputDate.getDate() === docDate.getDate();
 
         if (!isMatch) {
-            // Increment attempts
             await this.prisma.otpStore.update({
                 where: { id: otpRecord.id },
                 data: { attempts: { increment: 1 } }
             });
-            throw new ForbiddenException('Incorrect Date of Birth');
+            throw new ForbiddenException('Date de naissance incorrecte');
         }
 
-        // 4. Success
         await this.prisma.auditLog.create({
             data: {
-                action: 'VIEW_DOCUMENT', // or specific action like VIEW_DOCUMENT_FALLBACK
+                action: 'VIEW_DOCUMENT',
                 tenantId: document.tenantId,
                 resourceId: document.id,
                 actorId: 'PATIENT',
@@ -273,28 +244,45 @@ export class PatientAuthController {
             }
         });
 
-        if (document.status !== 'OPENED') {
+        if (document.status !== ('CONSULTED' as any)) {
             await this.prisma.document.update({
                 where: { id: documentId },
-                data: { status: 'OPENED' }
+                data: { status: 'CONSULTED' as any }
             });
         }
 
-        // Cleanup
         await this.prisma.otpStore.delete({ where: { id: otpRecord.id } });
 
-        // Generate URL
-        const command = new GetObjectCommand({
-            Bucket: process.env.AWS_S3_BUCKET_NAME || 'medlab-documents',
-            Key: document.fileKey,
-        });
+        // Generate File Access Token
+        const fileToken = this.jwtService.sign(
+            { sub: document.id, key: document.fileKey, type: 'file_access' },
+            { secret: process.env.PATIENT_JWT_SECRET || 'dev_secret_key_123', expiresIn: '5m' }
+        );
+
+        const baseUrl = process.env.APP_BASE_URL || 'http://localhost:5173';
+        const downloadUrl = `${baseUrl.replace('5173', '3000')}/api/auth/guest/view-file?token=${fileToken}`;
+
+        return { downloadUrl, status: 'success' };
+    }
+
+    @Get('view-file')
+    @Header('Content-Type', 'application/pdf')
+    @Header('Content-Disposition', 'inline')
+    async viewFile(@Query('token') token: string) {
+        if (!token) throw new BadRequestException('Token is required');
 
         try {
-            const downloadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
-            return { downloadUrl, status: 'success' };
-        } catch (error) {
-            console.error(error);
-            throw new BadRequestException('Could not generate download link');
+            const payload = this.jwtService.verify(token, {
+                secret: process.env.PATIENT_JWT_SECRET || 'dev_secret_key_123',
+            });
+
+            if (payload.type !== 'file_access') {
+                throw new UnauthorizedException('Invalid token type');
+            }
+
+            return this.storageService.getFileStream(payload.key);
+        } catch (e) {
+            throw new UnauthorizedException('Link expired or invalid');
         }
     }
 }

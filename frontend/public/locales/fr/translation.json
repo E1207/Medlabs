@@ -96,10 +96,9 @@
         "invalid_sender_id": "Sender ID invalide (3-11 caractères alphanumériques)"
     },
     "status": {
-        "UPLOADED": "Importé",
-        "NOTIFIED": "Notifié",
-        "DELIVERED": "Reçu",
-        "OPENED": "Ouvert",
+        "IMPORTED": "Importé",
+        "SENT": "Envoyé",
+        "CONSULTED": "Consulté",
         "FAILED": "Échec",
         "UNKNOWN": "Inconnu",
         "ACTIVE": "Actif",
@@ -151,7 +150,8 @@
             "resend": "Renvoyer SMS",
             "retry": "Réessayer",
             "delete": "Supprimer",
-            "cancel": "Annuler l'envoi"
+            "cancel": "Annuler l'envoi",
+            "complete": "Compléter le dossier"
         },
         "modals": {
             "resendTitle": "Renvoyer la Notification",
@@ -162,6 +162,30 @@
             "resentSuccess": "Notification renvoyée au {{phone}}",
             "preview_error": "Échec du chargement de la prévisualisation"
         }
+    },
+    "history": {
+        "title": "Historique des Envois",
+        "subtitle": "Suivi des résultats importés et envoyés aux patients",
+        "searchPlaceholder": "Rechercher par nom, réf...",
+        "table": {
+            "date": "Date",
+            "patient": "Patient",
+            "reference": "Référence",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "modals": {
+            "resentSuccess": "Notification renvoyée au {{phone}}"
+        }
+    },
+    "actions": {
+        "preview": "Voir le document",
+        "resend": "Renvoyer SMS",
+        "retry": "Réessayer",
+        "delete": "Supprimer",
+        "cancel": "Annuler l'envoi",
+        "complete": "Compléter le dossier",
+        "scan": "Scanner le dossier local"
     },
     "upload": {
         "title": "Nouveau Résultat",
@@ -210,6 +234,12 @@
                 "max": "{{days}} jours (max)",
                 "limitError": "Votre plan actuel est limité à {{days}} jours. Contactez le support.",
                 "minError": "La durée minimale de rétention est de 7 jours."
+            },
+            "import": {
+                "title": "Importation Automatique (SIL Local)",
+                "desc": "Configurez le système pour surveiller un dossier sur votre ordinateur local et importer les résultats automatiquement.",
+                "pathLabel": "Chemin du dossier local",
+                "hint": "Exemple: C:\\SIL\\Exports ou /Users/nom/Documents/Analyses"
             }
         },
         "api": {

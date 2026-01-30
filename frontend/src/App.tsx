@@ -9,6 +9,8 @@ import { LabSettings } from './pages/admin/LabSettings';
 import { TenantsList } from './pages/admin/TenantsList';
 import { PlatformSettings } from './pages/admin/PlatformSettings';
 import { Login } from './pages/auth/Login';
+import GuestAccess from './pages/public/GuestAccess';
+import { ExpiredDocument } from './pages/public/ExpiredDocument';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import AnalyticsDashboard from './pages/lab/AnalyticsDashboard';
 import ResultsHistory from './pages/tech/ResultsHistory';
@@ -20,6 +22,8 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<SmartUploadForm />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/guest/access" element={<GuestAccess />} />
+        <Route path="/guest/expired" element={<ExpiredDocument />} />
 
         {/* Protected Dashboard Routes */}
         <Route path="/dashboard/*" element={

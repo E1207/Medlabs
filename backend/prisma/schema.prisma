@@ -36,13 +36,11 @@ enum TenantType {
 }
 
 enum DocumentStatus {
-  PENDING_UPLOAD
-  UPLOADED
-  NOTIFIED // Email/SMS sent
-  DELIVERED // SMS received on phone
-  OPENED // Patient accessed the doc
-  EXPIRED // Deleted by retention policy
-  FAILED
+  IMPORTED // Initial state after folder scan
+  SENT // Notification sent with magic link
+  CONSULTED // Patient opened the document
+  EXPIRED // Permanently deleted due to retention
+  FAILED // Processing or notification error
 }
 
 enum AuditAction {
@@ -92,6 +90,9 @@ model Tenant {
   // Data Retention (Days to keep files)
   maxRetentionDays        Int @default(30) @map("max_retention_days")        // Limite Super Admin (contrat)
   configuredRetentionDays Int @default(30) @map("configured_retention_days") // Préférence Lab Admin
+
+  // Auto-Import Configuration
+  importFolderPath String? @map("import_folder_path") // Local folder path to watch for new PDFs
 
   // Status
   isActive Boolean @default(true) @map("is_active")
@@ -161,7 +162,7 @@ model Document {
   // Security & Lifecycle
   accessKey String         @unique @default(uuid()) @map("access_key") // The "Magic Link" token
   expiresAt DateTime       @map("expires_at") // HDS Retention Policy
-  status       DocumentStatus @default(UPLOADED)
+  status       DocumentStatus @default(IMPORTED)
   isAnonymized Boolean        @default(false) @map("is_anonymized")
 
   // Traceability

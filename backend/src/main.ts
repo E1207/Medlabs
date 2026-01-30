@@ -10,6 +10,7 @@ async function bootstrap() {
   validateEnvironment();
 
   const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api');
 
   // Global Validation Pipe
   app.useGlobalPipes(new ValidationPipe({
@@ -25,13 +26,13 @@ async function bootstrap() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for UI
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "blob:"], // eval is often needed by some PDF libraries
+        styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"],
         fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        frameSrc: ["'none'"],
+        objectSrc: ["'self'", "blob:"], // Allow local PDFs
+        frameSrc: ["'self'", "blob:"],  // Allow local PDFs
         upgradeInsecureRequests: [],
       },
     },

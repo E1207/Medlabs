@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Clock, Send, Eye, AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface StatusBadgeProps {
-    status: 'UPLOADED' | 'NOTIFIED' | 'DELIVERED' | 'OPENED' | 'FAILED' | string;
+    status: 'IMPORTED' | 'SENT' | 'CONSULTED' | 'EXPIRED' | 'FAILED' | string;
     timestamp?: string;
 }
 
@@ -16,23 +16,25 @@ export function StatusBadge({ status, timestamp }: StatusBadgeProps) {
     let icon = <Clock className="w-3.5 h-3.5 mr-1" />;
 
     switch (status) {
-        case 'UPLOADED':
-        case 'PENDING':
+        case 'IMPORTED':
             variant = 'warning';
             icon = <Clock className="w-3.5 h-3.5 mr-1" />;
             break;
-        case 'NOTIFIED':
-        case 'DELIVERED':
-            variant = 'default'; // Blue usually
+        case 'SENT':
+            variant = 'default';
             icon = <Send className="w-3.5 h-3.5 mr-1" />;
             break;
-        case 'OPENED':
+        case 'CONSULTED':
             variant = 'success';
             icon = <Eye className="w-3.5 h-3.5 mr-1" />;
             break;
         case 'FAILED':
             variant = 'danger';
             icon = <AlertTriangle className="w-3.5 h-3.5 mr-1" />;
+            break;
+        case 'EXPIRED':
+            variant = 'secondary';
+            icon = <Clock className="w-3.5 h-3.5 mr-1" />;
             break;
         default:
             variant = 'secondary';

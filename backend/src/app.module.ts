@@ -55,6 +55,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
   controllers: [AppController, PlatformConfigController],
   providers: [
     AppService,
+    PrismaService,
     CleanupService,
     // Global Rate Limiting Guard
     {

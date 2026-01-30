@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { PrismaService } from '../prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, DocumentStatus } from '@prisma/client';
 
 @Injectable()
 export class AnalyticsService {
@@ -63,7 +63,7 @@ export class AnalyticsService {
         });
 
         const totalMonth = openStats.reduce((acc: number, curr: any) => acc + curr._count, 0);
-        const openedMonth = openStats.find((d: any) => d.status === 'OPENED')?._count || 0;
+        const openedMonth = openStats.find((d: any) => d.status === DocumentStatus.CONSULTED)?._count || 0;
         const openRate = totalMonth > 0 ? ((openedMonth / totalMonth) * 100).toFixed(1) : '0.0';
 
 
@@ -89,8 +89,8 @@ export class AnalyticsService {
         // 4. Chart Data (Last 7 Days)
         // We need grouping by Day + Status (Sent vs Opened vs Failed)
         // Status mapping: 
-        // "Sent" = UPLOADED + NOTIFIED + DELIVERED + OPENED (Technically all these were "Sent")
-        // "Opened" = OPENED
+        // "Sent" = SENT + CONSULTED (Technically all these were "Sent")
+        // "Opened" = CONSULTED
         // "Failed" = FAILED
 
         // We will use a raw query for performance and easy date truncation
@@ -148,13 +148,13 @@ export class AnalyticsService {
 
             if (dayMap.has(dateStr)) {
                 const entry = dayMap.get(dateStr)!;
-                if (status === 'FAILED') {
+                if (status === DocumentStatus.FAILED) {
                     entry.failed += count;
-                } else if (status === 'OPENED') {
+                } else if (status === DocumentStatus.CONSULTED) {
                     entry.opened += count;
                     entry.sent += count; // Opened implies sent
                 } else {
-                    // UPLOADED, NOTIFIED, DELIVERED
+                    // SENT, IMPORTED, etc
                     entry.sent += count;
                 }
             }

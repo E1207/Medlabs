@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+
 import { CreateResultDto } from './dto/create-result.dto';
 import { StorageService } from '../storage/storage.service';
 import { PrismaService } from '../prisma.service';
@@ -6,7 +7,7 @@ import { SmsService } from '../notifications/sms.service';
 import { EmailService } from '../notifications/email.service';
 import { MagicLinkService } from '../auth/magic-link.service';
 import { v4 as uuidv4 } from 'uuid';
-import { AuditAction } from '@prisma/client';
+import { AuditAction, DocumentStatus } from '@prisma/client';
 
 @Injectable()
 export class ResultsService {
@@ -69,7 +70,7 @@ export class ResultsService {
                 patientDob: new Date(createResultDto.patientDob),
                 uploadedById: userId,
                 expiresAt: expiresAt,
-                status: 'UPLOADED',
+                status: DocumentStatus.SENT,
             },
         });
 
@@ -83,7 +84,7 @@ export class ResultsService {
     }
 
     async findAll(tenantId: string, search: string = '', page: number = 1) {
-        const take = 10;
+        const take = 50;
         const skip = (page - 1) * take;
 
         const where: any = {};
@@ -211,11 +212,52 @@ export class ResultsService {
         // Update Status
         await this.prisma.document.update({
             where: { id: documentId },
-            data: { status: 'NOTIFIED' }
+            data: { status: DocumentStatus.SENT }
         });
     }
 
+    async completeImported(tenantId: string, documentId: string, updateDto: CreateResultDto, userId: string) {
+        const doc = await this.prisma.document.findFirst({
+            where: { id: documentId, tenantId, status: DocumentStatus.IMPORTED },
+        });
+
+        if (!doc) {
+            throw new NotFoundException('Imported document not found');
+        }
+
+        // Update document with complete information
+        const updatedDoc = await this.prisma.document.update({
+            where: { id: documentId },
+            data: {
+                patientPhone: updateDto.patientPhone,
+                patientEmail: updateDto.patientEmail,
+                patientDob: updateDto.patientDob ? new Date(updateDto.patientDob) : null,
+                status: DocumentStatus.SENT, // Change status to SENT after completion
+            },
+        });
+
+        // Trigger notification
+        this.notifyPatient(updatedDoc.id).catch(err => console.error('Failed to notify patient', err));
+
+        // Audit log
+        await this.prisma.auditLog.create({
+            data: {
+                tenantId,
+                action: AuditAction.UPDATE_SETTINGS,
+                description: `Completed imported document ${doc.folderRef}`,
+                resourceId: documentId,
+                actorId: userId,
+            },
+        });
+
+        return {
+            message: 'Document completed and notification sent',
+            documentId: updatedDoc.id,
+        };
+    }
+
     async remove(tenantId: string, id: string) {
+
         // If tenantId is null (Super Admin), we skip the check
         const where: any = { id };
         if (tenantId) {
@@ -230,7 +272,13 @@ export class ResultsService {
             where: { id }
         });
 
-        // TODO: Delete file from S3
+        // Delete from storage
+        await this.storage.deleteFile(doc.fileKey);
+
         return { message: 'Document deleted successfully' };
+    }
+
+    async getFileStream(key: string) {
+        return this.storage.getFileStream(key);
     }
 }

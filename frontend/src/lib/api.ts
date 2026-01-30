@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://localhost:3005';
+export const API_BASE_URL = '/api';
 
 interface RequestOptions extends RequestInit {
     headers?: Record<string, string>;

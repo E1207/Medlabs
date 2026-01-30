@@ -108,7 +108,7 @@ async function testTenantIsolation() {
             patientLastName: 'Patient',
             uploadedById: userA.id,
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            status: 'UPLOADED',
+            status: 'SENT',
         },
     });
 
@@ -299,7 +299,7 @@ async function testOtpBruteForce() {
             patientLastName: 'Force',
             uploadedById: testUser.id,
             expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            status: 'UPLOADED',
+            status: 'SENT',
         },
     });
 

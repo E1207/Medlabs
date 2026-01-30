@@ -31,14 +31,28 @@ export class RolesGuard implements CanActivate {
     constructor(private reflector: Reflector) { }
 
     canActivate(context: ExecutionContext): boolean {
-        const roles = this.reflector.get<string[]>('roles', context.getHandler());
-        if (!roles) {
+        const roles = this.reflector.getAllAndOverride<string[]>('roles', [
+            context.getHandler(),
+            context.getClass(),
+        ]);
+
+        if (!roles || roles.length === 0) {
             return true;
         }
+
         const request = context.switchToHttp().getRequest();
         const user = request.user;
 
-        // Check if user has one of the required roles
-        return roles.includes(user.role);
+        if (!user || !user.role) {
+            console.error(`[RolesGuard] Accès refusé : utilisateur ou rôle manquant dans la requête`);
+            return false;
+        }
+
+        const hasRole = roles.includes(user.role);
+        if (!hasRole) {
+            console.warn(`[RolesGuard] Accès refusé pour ${user.email}. Rôle requis : ${roles}, Rôle possédé : ${user.role}`);
+        }
+
+        return hasRole;
     }
 }

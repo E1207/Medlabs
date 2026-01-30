@@ -95,7 +95,7 @@ async function main() {
             patientPhone: '+237699001122',
             fileKey: 'demo/result1.pdf',
             fileSize: 1024 * 500, // 500KB
-            status: 'UPLOADED',
+            status: 'IMPORTED',
         },
         {
             folderRef: 'DOS-2024-002',
@@ -105,7 +105,7 @@ async function main() {
             patientPhone: '+237677554433',
             fileKey: 'demo/result2.pdf',
             fileSize: 1024 * 1200, // 1.2MB
-            status: 'NOTIFIED',
+            status: 'SENT',
         },
         {
             folderRef: 'DOS-2024-003',
@@ -115,7 +115,7 @@ async function main() {
             patientPhone: '+237699887766',
             fileKey: 'demo/result3.pdf',
             fileSize: 1024 * 250, // 250KB
-            status: 'DELIVERED',
+            status: 'CONSULTED',
         }
     ];
 

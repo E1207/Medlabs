@@ -3,7 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { StorageService } from '../storage/storage.service';
-import { AuditAction } from '@prisma/client';
+import { AuditAction, DocumentStatus } from '@prisma/client';
 
 @Injectable()
 export class CleanupService {
@@ -26,6 +26,7 @@ export class CleanupService {
         try {
             // 1. Get all tenants to respect their individual retention policies
             const tenants = await this.prisma.tenant.findMany({
+                where: { isActive: true },
                 select: {
                     id: true,
                     name: true,
@@ -57,8 +58,8 @@ export class CleanupService {
                 // 3. Process Anonymization
                 for (const doc of eligibleDocs) {
                     try {
-                        // A. Delete physical file from S3
-                        if (doc.fileKey && !doc.fileKey.startsWith('ANONYMIZED')) {
+                        // A. Delete physical file from storage
+                        if (doc.fileKey && doc.fileKey !== 'ANONYMIZED_RETENTION_POLICY') {
                             await this.storage.deleteFile(doc.fileKey);
                         }
 
@@ -68,14 +69,15 @@ export class CleanupService {
                             data: {
                                 // Clear sensitive data
                                 fileKey: 'ANONYMIZED_RETENTION_POLICY',
-                                patientFirstName: 'Dossier',
-                                patientLastName: 'Archivé',
-                                patientEmail: 'archived@anonymized.local',
-                                patientPhone: '000000000',
-                                folderRef: `ARCHIVED-${doc.folderRef}`,
+                                patientFirstName: 'ARCHIVÉ',
+                                patientLastName: 'PATIENT ARCHIVÉ',
+                                patientEmail: 'anonyme@medlabs.cm',
+                                patientPhone: '+237000000000',
+                                folderRef: `REF-${doc.id.substring(0, 8)}`, // Anonymize folder ref too but keep linkable
                                 // Mark as anonymized
                                 isAnonymized: true,
-                                // Keep: id, tenantId, status, createdAt (for analytics)
+                                status: DocumentStatus.EXPIRED,
+                                // Keep: id, tenantId, createdAt (for analytics)
                             }
                         });
                     } catch (docError) {
@@ -90,7 +92,7 @@ export class CleanupService {
                     data: {
                         tenantId: tenant.id,
                         action: AuditAction.DELETE_DOCUMENT,
-                        description: `Auto-anonymized ${eligibleDocs.length} documents (Rétention: ${tenant.configuredRetentionDays} jours)`,
+                        description: `Auto-anonymized ${eligibleDocs.length} documents (Retention: ${tenant.configuredRetentionDays} days)`,
                         actorId: 'SYSTEM_CRON',
                     }
                 });
@@ -104,10 +106,11 @@ export class CleanupService {
     }
 
     /**
-     * Manual trigger for testing (can be called via API or CLI)
+     * Manual trigger for testing
      */
     async runManually() {
         this.logger.warn('⚠️ Manual cleanup triggered');
         await this.handleCron();
+        return { success: true };
     }
 }

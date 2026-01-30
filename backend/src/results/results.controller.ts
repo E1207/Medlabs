@@ -1,14 +1,18 @@
-import { Controller, Post, Get, Patch, Delete, UseGuards, UseInterceptors, UploadedFile, Body, Query, Param } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Delete, UseGuards, UseInterceptors, UploadedFile, Body, Query, Param, Header } from '@nestjs/common';
 import { ResultsService } from './results.service';
 import { CreateResultDto } from './dto/create-result.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard, RolesGuard, Roles, User } from '../auth/guards';
 import { UserRole } from '@prisma/client';
+import { FolderImportService } from './folder-import.service';
 
 @Controller('results')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ResultsController {
-    constructor(private readonly resultsService: ResultsService) { }
+    constructor(
+        private readonly resultsService: ResultsService,
+        private readonly folderImportService: FolderImportService,
+    ) { }
 
     @Get()
     @Roles('TECHNICIAN', 'LAB_ADMIN', 'SUPER_ADMIN')
@@ -47,6 +51,30 @@ export class ResultsController {
         // Force tenantId from authenticated user
         const tenantId = user.tenantId;
         return this.resultsService.create(createResultDto, file, tenantId, user.id);
+    }
+
+    @Patch(':id/complete')
+    @Roles('TECHNICIAN', 'LAB_ADMIN')
+    completeImported(
+        @User() user: any,
+        @Param('id') id: string,
+        @Body() updateDto: CreateResultDto,
+    ) {
+        return this.resultsService.completeImported(user.tenantId, id, updateDto, user.id);
+    }
+
+    @Post('scan-folder')
+    @Roles('TECHNICIAN', 'LAB_ADMIN')
+    async manualScan(@User() user: any) {
+        return this.folderImportService.manualScan(user.tenantId);
+    }
+
+    @Get('view-secure')
+    @Roles('TECHNICIAN', 'LAB_ADMIN', 'SUPER_ADMIN')
+    @Header('Content-Type', 'application/pdf')
+    @Header('Content-Disposition', 'inline')
+    async viewSecure(@Query('key') key: string) {
+        return this.resultsService.getFileStream(key);
     }
 
     @Delete(':id')

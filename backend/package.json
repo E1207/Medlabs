@@ -47,6 +47,8 @@
     "nodemailer": "^7.0.12",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "pdf-extraction": "^1.0.2",
+    "pdfkit": "^0.17.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "uuid": "^13.0.0"
@@ -61,6 +63,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
     "@types/node-fetch": "^2.6.13",
+    "@types/pdf-parse": "^1.1.5",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^10.0.0",
     "eslint": "^9.18.0",

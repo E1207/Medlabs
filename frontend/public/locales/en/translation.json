@@ -96,10 +96,8 @@
         "invalid_sender_id": "Invalid Sender ID (3-11 alphanumeric characters)"
     },
     "status": {
-        "UPLOADED": "Uploaded",
-        "NOTIFIED": "Notified",
-        "DELIVERED": "Delivered",
-        "OPENED": "Opened",
+        "SENT": "Sent",
+        "CONSULTED": "Consulted",
         "FAILED": "Failed",
         "UNKNOWN": "Unknown",
         "ACTIVE": "Active",
